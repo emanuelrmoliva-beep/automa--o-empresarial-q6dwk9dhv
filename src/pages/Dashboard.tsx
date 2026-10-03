@@ -518,7 +518,10 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* 5 Metric Cards (Incluindo Pedidos em Aberto) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div
+        data-tour="dashboard-metrics"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4"
+      >
         {/* Pedidos em Aberto (Novo) */}
         <div
           onClick={() => navigate('/pedidos-em-aberto')}
@@ -797,7 +800,7 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Seção Gráfica 2: Pizzas (Despesas por Categoria & Receitas vs Despesas) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+      <div data-tour="dashboard-charts" className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Pizza: Despesas por Categoria */}
         <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">

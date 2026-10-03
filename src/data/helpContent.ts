@@ -334,6 +334,58 @@ export const HELP_TOPICS: HelpTopic[] = [
     ],
   },
   {
+    id: 'tour-interativo-guiado',
+    category: 'comeco',
+    categoryLabel: 'Primeiros Passos',
+    title: 'Tour Interativo com Destaque na Tela (Coach Marks)',
+    shortDescription:
+      'Conheça o tutorial interativo do sistema: a tela escurece e ilumina exatamente o menu, gráfico ou card que você está aprendendo a usar!',
+    iconName: 'Sparkles',
+    route: '/dashboard',
+    badge: 'Novidade',
+    keywords: [
+      'tutorial',
+      'tour',
+      'destaque',
+      'spotlight',
+      'coach marks',
+      'primeiro acesso',
+      'ajuda',
+      'como usar',
+      'refazer tour',
+      'guia interativo',
+    ],
+    highlights: [
+      'Spotlight dinâmico: recorte e iluminação física sobre o elemento real que você está aprendendo a usar.',
+      'Balão explicativo ancorado de forma inteligente com botões Voltar, Avançar e Pular tour.',
+      'Adaptação completa para desktop e celulares (com destaque na barra de navegação ou gaveta de módulos).',
+      'Possibilidade de refazer o tour a qualquer momento pelo botão "?" → "Refazer Tour".',
+    ],
+    steps: [
+      {
+        title: '1. Início Automático no Primeiro Acesso',
+        description:
+          'Ao cadastrar sua empresa pela primeira vez, o ERP inicia automaticamente o tour guiado iluminando a interface real para que você nunca fique perdido.',
+      },
+      {
+        title: '2. Como o Destaque (Spotlight) Funciona',
+        description:
+          'Toda a tela ganha uma camada escura suave, exceto o elemento que está sendo ensinado (por exemplo, o sino de notificações, os cards de métricas ou a navegação lateral). Ele recebe uma moldura verde iluminada que chama a sua atenção.',
+      },
+      {
+        title: '3. Navegação Passo a Passo',
+        description:
+          'O balão mostra o número do passo (ex.: Passo 3 de 12), o objetivo daquele menu e dicas operacionais. Use os botões "Avançar" para seguir, "Voltar" para rever ou o "X" / "Pular tour" para fechar quando desejar.',
+        tip: 'No celular, o tour adapta o balão para a parte visível da tela e destaca automaticamente a barra inferior ou abre a gaveta de módulos.',
+      },
+      {
+        title: '4. Como Refazer o Tour a Qualquer Momento',
+        description:
+          'Precisa treinar um novo colaborador ou quer rever os recursos? Clique no botão flutuante verde "?" no canto inferior direito para abrir a Central de Ajuda e clique em "Refazer Tour" no rodapé!',
+      },
+    ],
+  },
+  {
     id: 'primeiro-acesso',
     category: 'comeco',
     categoryLabel: 'Primeiros Passos',

@@ -185,7 +185,10 @@ export const Layout: React.FC = () => {
   const companyLogoUrl = company?.logo ? getPbFileUrl('companies', company.id, company.logo) : null
 
   const sidebarContent = (
-    <div className="flex flex-col h-full bg-[#0F172A] text-slate-300 select-none">
+    <div
+      data-tour="sidebar-navigation"
+      className="flex flex-col h-full bg-[#0F172A] text-slate-300 select-none"
+    >
       {/* Brand Header */}
       <div className="h-16 flex items-center px-4 border-b border-slate-800 justify-between">
         <div className="flex items-center space-x-3 overflow-hidden">
@@ -239,11 +242,13 @@ export const Layout: React.FC = () => {
             )}
             {group.items.map((item: any) => {
               const Icon = item.icon
+              const itemTourKey = item.path.replace('/', '').replace('#', '') || 'root'
               if (item.isAction) {
                 return (
                   <button
                     key={item.label}
                     onClick={item.action}
+                    data-tour={`nav-${itemTourKey}`}
                     className="w-full group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/40 text-left"
                     title={isCollapsed ? item.label : undefined}
                   >
@@ -263,6 +268,7 @@ export const Layout: React.FC = () => {
                 <NavLink
                   key={item.path}
                   to={item.path}
+                  data-tour={`nav-${itemTourKey}`}
                   onClick={() => setMobileOpen(false)}
                   className={({ isActive }) =>
                     `group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
@@ -408,7 +414,9 @@ export const Layout: React.FC = () => {
               </button>
 
               {/* Dropdown de Notificações Ativo */}
-              <NotificationsDropdown />
+              <div data-tour="notifications-bell">
+                <NotificationsDropdown />
+              </div>
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -470,6 +478,7 @@ export const Layout: React.FC = () => {
           {/* Botão Flutuante de Ajuda "?" (Canto Inferior Direito) */}
           <div className="fixed bottom-16 sm:bottom-6 right-4 sm:right-6 z-40">
             <button
+              data-tour="floating-help"
               onClick={() => handleOpenHelp()}
               className="group relative flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-lg hover:shadow-emerald-500/30 hover:scale-105 active:scale-95 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-400/30"
               title="Ajuda & Dúvidas sobre o sistema (?)"
@@ -492,10 +501,18 @@ export const Layout: React.FC = () => {
           />
 
           {/* Tour Guiado de Primeiro Acesso */}
-          <OnboardingTour open={tourOpen} onClose={handleCloseTour} />
+          <OnboardingTour
+            open={tourOpen}
+            onClose={handleCloseTour}
+            onOpenMobileDrawer={() => setMobileOpen(true)}
+            onCloseMobileDrawer={() => setMobileOpen(false)}
+          />
 
           {/* Mobile Bottom Navigation Bar for quick thumb navigation */}
-          <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 flex items-center justify-around py-1.5 px-2 safe-area-pb shadow-lg">
+          <nav
+            data-tour="mobile-bottom-nav"
+            className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 flex items-center justify-around py-1.5 px-2 safe-area-pb shadow-lg"
+          >
             <NavLink
               to="/dashboard"
               className={({ isActive }) =>
