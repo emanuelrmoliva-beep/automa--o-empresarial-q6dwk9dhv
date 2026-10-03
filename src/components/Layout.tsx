@@ -12,6 +12,8 @@ import {
   CreditCard,
   History,
   Building2,
+  FileText,
+  Scale,
   LogOut,
   Menu,
   X,
@@ -28,6 +30,7 @@ import HelpModal from '@/components/HelpModal'
 import NotificationsDropdown from '@/components/NotificationsDropdown'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
+import { getPbFileUrl } from '@/services/erp'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -70,6 +73,7 @@ export const Layout: React.FC = () => {
         { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { path: '/agenda', label: 'Agenda & Entregas', icon: CalendarDays },
         { path: '/vendas', label: 'Vendas', icon: ShoppingCart },
+        { path: '/orcamentos', label: 'Orçamentos', icon: FileText },
         { path: '/clientes', label: 'Clientes', icon: Users },
       ],
     },
@@ -77,7 +81,7 @@ export const Layout: React.FC = () => {
       label: 'Financeiro',
       items: [
         { path: '/metas', label: 'Metas & Réguas', icon: Target },
-        { path: '/relatorios', label: 'Relatórios', icon: FileSpreadsheet },
+        { path: '/relatorios', label: 'Relatórios & Projeção', icon: FileSpreadsheet },
         { path: '/receitas', label: 'Receitas', icon: ArrowDownLeft },
         { path: '/despesas', label: 'Despesas', icon: ArrowUpRight },
         { path: '/contas-a-pagar', label: 'Contas a Pagar', icon: CreditCard },
@@ -85,9 +89,10 @@ export const Layout: React.FC = () => {
       ],
     },
     {
-      label: 'Produtos',
+      label: 'Produtos & Compras',
       items: [
-        { path: '/estoque', label: 'Estoque', icon: Package },
+        { path: '/estoque', label: 'Estoque & Catálogo', icon: Package },
+        { path: '/cotacoes', label: 'Cotações de Fornecedores', icon: Scale },
         { path: '/formacao-de-precos', label: 'Formação de Preços', icon: Calculator },
         { path: '/entradas-saidas', label: 'Entradas e Saídas', icon: History },
       ],
@@ -115,10 +120,12 @@ export const Layout: React.FC = () => {
     if (p.startsWith('/dashboard')) return 'Dashboard Operacional'
     if (p.startsWith('/agenda')) return 'Agenda de Pedidos e Entregas'
     if (p.startsWith('/metas')) return 'Sistema de Metas & Réguas'
-    if (p.startsWith('/relatorios')) return 'Central de Relatórios'
-    if (p.startsWith('/vendas')) return 'Vendas'
+    if (p.startsWith('/relatorios')) return 'Central de Relatórios & Projeção'
+    if (p.startsWith('/vendas')) return 'Vendas Comerciais'
+    if (p.startsWith('/orcamentos')) return 'Orçamentos & Propostas'
+    if (p.startsWith('/cotacoes')) return 'Cotações & Comparativo de Fornecedores'
     if (p.startsWith('/clientes')) return 'Cadastro de Clientes'
-    if (p.startsWith('/estoque')) return 'Controle de Estoque'
+    if (p.startsWith('/estoque')) return 'Controle de Estoque & Catálogo'
     if (p.startsWith('/formacao-de-precos')) return 'Formação de Preços & Markup'
     if (p.startsWith('/receitas')) return 'Receitas'
     if (p.startsWith('/despesas')) return 'Despesas'
@@ -137,19 +144,30 @@ export const Layout: React.FC = () => {
   }).format(new Date())
 
   const userInitials = (user?.name || user?.email || 'U').slice(0, 2).toUpperCase()
+  const companyLogoUrl = company?.logo ? getPbFileUrl('companies', company.id, company.logo) : null
 
   const sidebarContent = (
     <div className="flex flex-col h-full bg-[#0F172A] text-slate-300 select-none">
       {/* Brand Header */}
       <div className="h-16 flex items-center px-4 border-b border-slate-800 justify-between">
         <div className="flex items-center space-x-3 overflow-hidden">
-          <div className="w-10 h-10 min-w-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shadow-md p-1">
-            <img
-              src="/app-icon.svg"
-              alt="Ícone Automação Empresarial"
-              className="w-8 h-8 rounded-lg"
-            />
-          </div>
+          {companyLogoUrl ? (
+            <div className="w-10 h-10 min-w-10 rounded-xl bg-white flex items-center justify-center overflow-hidden shadow-md p-1 border border-slate-700">
+              <img
+                src={companyLogoUrl}
+                alt={company?.trade_name || 'Logo da Empresa'}
+                className="w-full h-full object-contain"
+              />
+            </div>
+          ) : (
+            <div className="w-10 h-10 min-w-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shadow-md p-1">
+              <img
+                src="/app-icon.svg"
+                alt="Ícone Automação Empresarial"
+                className="w-8 h-8 rounded-lg"
+              />
+            </div>
+          )}
           {(!isCollapsed || mobileOpen) && (
             <div className="flex flex-col truncate">
               <span className="font-bold text-slate-100 text-sm tracking-tight truncate">
@@ -323,6 +341,11 @@ export const Layout: React.FC = () => {
               >
                 <Menu className="w-6 h-6" />
               </button>
+              {companyLogoUrl && (
+                <div className="lg:hidden w-8 h-8 rounded-lg bg-white border border-slate-200 p-0.5 overflow-hidden flex items-center justify-center shrink-0 shadow-2xs">
+                  <img src={companyLogoUrl} alt="Logo" className="w-full h-full object-contain" />
+                </div>
+              )}
               <div className="min-w-0">
                 <h1 className="text-sm sm:text-lg font-bold text-slate-900 tracking-tight truncate">
                   {getPageTitle()}
@@ -459,6 +482,24 @@ export const Layout: React.FC = () => {
                     className={`w-5 h-5 mb-0.5 ${isActive ? 'text-emerald-600 stroke-[2.5]' : ''}`}
                   />
                   <span>Vendas</span>
+                </>
+              )}
+            </NavLink>
+
+            <NavLink
+              to="/orcamentos"
+              className={({ isActive }) =>
+                `flex flex-col items-center justify-center py-1 px-2.5 rounded-lg text-[10px] font-medium transition ${
+                  isActive ? 'text-emerald-600 font-bold' : 'text-slate-500 hover:text-slate-900'
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <FileText
+                    className={`w-5 h-5 mb-0.5 ${isActive ? 'text-emerald-600 stroke-[2.5]' : ''}`}
+                  />
+                  <span>Orçamentos</span>
                 </>
               )}
             </NavLink>

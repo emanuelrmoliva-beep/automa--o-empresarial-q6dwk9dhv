@@ -12,7 +12,22 @@ import type {
   Goal,
   AgendaEvent,
   ErpNotification,
+  Quote,
+  SupplierQuote,
 } from '@/types/erp'
+
+// PocketBase File URL helper
+export function getPbFileUrl(
+  collectionIdOrName: string,
+  recordId: string,
+  filename?: string,
+): string | null {
+  if (!filename) return null
+  return pb.files.getURL(
+    { id: recordId, collectionId: collectionIdOrName, collectionName: collectionIdOrName } as any,
+    filename,
+  )
+}
 
 // Companies
 export async function getCompanyByUserId(userId: string): Promise<Company | null> {
@@ -27,11 +42,14 @@ export async function getCompanyByUserId(userId: string): Promise<Company | null
   }
 }
 
-export async function createCompany(data: Partial<Company>): Promise<Company> {
+export async function createCompany(data: FormData | Partial<Company>): Promise<Company> {
   return await pb.collection('companies').create<Company>(data)
 }
 
-export async function updateCompany(id: string, data: Partial<Company>): Promise<Company> {
+export async function updateCompany(
+  id: string,
+  data: FormData | Partial<Company>,
+): Promise<Company> {
   return await pb.collection('companies').update<Company>(id, data)
 }
 
@@ -43,11 +61,14 @@ export async function getProducts(companyId: string): Promise<Product[]> {
   })
 }
 
-export async function createProduct(data: Partial<Product>): Promise<Product> {
+export async function createProduct(data: FormData | Partial<Product>): Promise<Product> {
   return await pb.collection('products').create<Product>(data)
 }
 
-export async function updateProduct(id: string, data: Partial<Product>): Promise<Product> {
+export async function updateProduct(
+  id: string,
+  data: FormData | Partial<Product>,
+): Promise<Product> {
   return await pb.collection('products').update<Product>(id, data)
 }
 
@@ -285,5 +306,209 @@ export async function markAllNotificationsAsRead(companyId: string, userId: stri
     )
   } catch (err) {
     console.error('Erro ao marcar todas como lidas:', err)
+  }
+}
+
+// Quotes (Orçamentos)
+export async function getQuotes(companyId: string): Promise<Quote[]> {
+  return await pb.collection('quotes').getFullList<Quote>({
+    filter: `company_id = "${companyId}"`,
+    sort: '-issue_date',
+    expand: 'customer_id',
+  })
+}
+
+export async function getQuoteById(id: string): Promise<Quote> {
+  return await pb.collection('quotes').getOne<Quote>(id, {
+    expand: 'customer_id',
+  })
+}
+
+export async function createQuote(data: Partial<Quote>): Promise<Quote> {
+  return await pb.collection('quotes').create<Quote>(data)
+}
+
+export async function updateQuote(id: string, data: Partial<Quote>): Promise<Quote> {
+  return await pb.collection('quotes').update<Quote>(id, data)
+}
+
+export async function deleteQuote(id: string): Promise<boolean> {
+  return await pb.collection('quotes').delete(id)
+}
+
+// Supplier Quotes (Cotações & Comparativo de Fornecedores)
+export async function getSupplierQuotes(companyId: string): Promise<SupplierQuote[]> {
+  return await pb.collection('supplier_quotes').getFullList<SupplierQuote>({
+    filter: `company_id = "${companyId}"`,
+    sort: '-quote_date',
+    expand: 'product_id',
+  })
+}
+
+export async function getSupplierQuoteById(id: string): Promise<SupplierQuote> {
+  return await pb.collection('supplier_quotes').getOne<SupplierQuote>(id, {
+    expand: 'product_id',
+  })
+}
+
+export async function createSupplierQuote(data: Partial<SupplierQuote>): Promise<SupplierQuote> {
+  return await pb.collection('supplier_quotes').create<SupplierQuote>(data)
+}
+
+export async function updateSupplierQuote(
+  id: string,
+  data: Partial<SupplierQuote>,
+): Promise<SupplierQuote> {
+  return await pb.collection('supplier_quotes').update<SupplierQuote>(id, data)
+}
+
+export async function deleteSupplierQuote(id: string): Promise<boolean> {
+  return await pb.collection('supplier_quotes').delete(id)
+}
+
+// Exportação / Backup Completo da Empresa
+export interface FullCompanyBackup {
+  metadata: {
+    export_date: string
+    system_version: string
+    company_id: string
+    company_name: string
+    total_records: number
+  }
+  company: Company | null
+  customers: Customer[]
+  products: Product[]
+  sales: Sale[]
+  quotes: Quote[]
+  supplier_quotes: SupplierQuote[]
+  entries: Entry[]
+  expenses: Expense[]
+  payables: Payable[]
+  receivables: Receivable[]
+  movements: Movement[]
+  goals: Goal[]
+  agenda_events: AgendaEvent[]
+}
+
+export async function exportFullCompanyBackup(companyId: string): Promise<FullCompanyBackup> {
+  const [
+    company,
+    customers,
+    products,
+    sales,
+    quotes,
+    supplier_quotes,
+    entries,
+    expenses,
+    payables,
+    receivables,
+    movements,
+    goals,
+    agenda_events,
+  ] = await Promise.all([
+    pb
+      .collection('companies')
+      .getOne<Company>(companyId)
+      .catch(() => null),
+    pb
+      .collection('customers')
+      .getFullList<Customer>({ filter: `company_id = "${companyId}"` })
+      .catch(() => []),
+    pb
+      .collection('products')
+      .getFullList<Product>({ filter: `company_id = "${companyId}"` })
+      .catch(() => []),
+    pb
+      .collection('sales')
+      .getFullList<Sale>({ filter: `company_id = "${companyId}"` })
+      .catch(() => []),
+    pb
+      .collection('quotes')
+      .getFullList<Quote>({ filter: `company_id = "${companyId}"` })
+      .catch(() => []),
+    pb
+      .collection('supplier_quotes')
+      .getFullList<SupplierQuote>({ filter: `company_id = "${companyId}"` })
+      .catch(() => []),
+    pb
+      .collection('entries')
+      .getFullList<Entry>({ filter: `company_id = "${companyId}"` })
+      .catch(() => []),
+    pb
+      .collection('expenses')
+      .getFullList<Expense>({ filter: `company_id = "${companyId}"` })
+      .catch(() => []),
+    pb
+      .collection('payables')
+      .getFullList<Payable>({ filter: `company_id = "${companyId}"` })
+      .catch(() => []),
+    pb
+      .collection('receivables')
+      .getFullList<Receivable>({ filter: `company_id = "${companyId}"` })
+      .catch(() => []),
+    pb
+      .collection('movements')
+      .getFullList<Movement>({ filter: `company_id = "${companyId}"` })
+      .catch(() => []),
+    pb
+      .collection('goals')
+      .getFullList<Goal>({ filter: `company_id = "${companyId}"` })
+      .catch(() => []),
+    pb
+      .collection('agenda_events')
+      .getFullList<AgendaEvent>({ filter: `company_id = "${companyId}"` })
+      .catch(() => []),
+  ])
+
+  // Acrescentar URLs das fotos/logos para facilidade de download no backup
+  const enrichedProducts = products.map((p) => ({
+    ...p,
+    photo_download_url: p.photo ? getPbFileUrl('products', p.id, p.photo) : null,
+  }))
+
+  const enrichedCompany = company
+    ? {
+        ...company,
+        logo_download_url: company.logo
+          ? getPbFileUrl('companies', company.id, company.logo)
+          : null,
+      }
+    : null
+
+  const total =
+    (customers.length || 0) +
+    (products.length || 0) +
+    (sales.length || 0) +
+    (quotes.length || 0) +
+    (supplier_quotes.length || 0) +
+    (entries.length || 0) +
+    (expenses.length || 0) +
+    (payables.length || 0) +
+    (receivables.length || 0) +
+    (movements.length || 0) +
+    (goals.length || 0) +
+    (agenda_events.length || 0)
+
+  return {
+    metadata: {
+      export_date: new Date().toISOString(),
+      system_version: 'Automação Empresarial ERP v2.0',
+      company_id: companyId,
+      company_name: company?.trade_name || company?.legal_name || 'Empresa',
+      total_records: total,
+    },
+    company: enrichedCompany,
+    customers,
+    products: enrichedProducts,
+    sales,
+    quotes,
+    supplier_quotes,
+    entries,
+    expenses,
+    payables,
+    receivables,
+    movements,
+    goals,
+    agenda_events,
   }
 }

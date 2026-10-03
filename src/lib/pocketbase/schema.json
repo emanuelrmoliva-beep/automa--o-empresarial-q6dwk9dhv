@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-03T22:27:18.579Z",
+  "generatedAt": "2026-10-03T22:39:02.783Z",
   "collections": [
     {
       "name": "users",
@@ -204,6 +204,12 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "logo",
+          "type": "file",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": [
@@ -286,6 +292,12 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "photo",
+          "type": "file",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": [
@@ -1132,6 +1144,218 @@
         "CREATE INDEX idx_notifications_user_company ON notifications (user_id, company_id)",
         "CREATE INDEX idx_notifications_read ON notifications (read)",
         "CREATE INDEX idx_notifications_ref ON notifications (type, ref_id)"
+      ]
+    },
+    {
+      "name": "quotes",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "view": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "create": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "update": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "delete": "@request.auth.id != '' && company_id.user_id = @request.auth.id"
+      },
+      "fields": [
+        {
+          "name": "company_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "companies"
+        },
+        {
+          "name": "customer_id",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "customers"
+        },
+        {
+          "name": "quote_number",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "title",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "issue_date",
+          "type": "date",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "valid_until",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "customer_name",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "customer_contact",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["Rascunho", "Enviado", "Aprovado", "Recusado", "Convertido"]
+        },
+        {
+          "name": "items",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "subtotal",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "discount",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "total_amount",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "payment_terms",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_quotes_company_date ON quotes (company_id, issue_date DESC)",
+        "CREATE INDEX idx_quotes_status ON quotes (status)"
+      ]
+    },
+    {
+      "name": "supplier_quotes",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "view": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "create": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "update": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "delete": "@request.auth.id != '' && company_id.user_id = @request.auth.id"
+      },
+      "fields": [
+        {
+          "name": "company_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "companies"
+        },
+        {
+          "name": "product_id",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "products"
+        },
+        {
+          "name": "item_name",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "quote_date",
+          "type": "date",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "quantity_needed",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["Em Aberto", "Concluída", "Cancelada"]
+        },
+        {
+          "name": "chosen_supplier_index",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "suppliers",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_supplier_quotes_company ON supplier_quotes (company_id, quote_date DESC)",
+        "CREATE INDEX idx_supplier_quotes_product ON supplier_quotes (product_id)"
       ]
     }
   ]

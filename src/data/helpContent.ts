@@ -39,6 +39,191 @@ export const HELP_CATEGORIES = [
 
 export const HELP_TOPICS: HelpTopic[] = [
   {
+    id: 'orcamentos-compartilhar',
+    category: 'operacao',
+    categoryLabel: 'Operação Diária',
+    title: 'Orçamentos & Compartilhamento (WhatsApp, E-mail, PDF)',
+    shortDescription:
+      'Como criar propostas comerciais e compartilhar com clientes por WhatsApp, e-mail nativo ou download de PDF.',
+    iconName: 'FileText',
+    route: '/orcamentos',
+    badge: 'Novidade',
+    keywords: [
+      'orçamento',
+      'proposta',
+      'compartilhar',
+      'whatsapp',
+      'email',
+      'pdf',
+      'vender',
+      'conversão',
+      'proposta comercial',
+    ],
+    highlights: [
+      'Geração de PDF do orçamento com dados do cliente, itens e condições.',
+      'Compartilhamento direto via WhatsApp Web/App com texto formatado pronto.',
+      'Envio por e-mail nativo (mailto:) e suporte ao menu nativo de compartilhamento do celular.',
+      'Conversão com um clique do orçamento aprovado em Venda concluída.',
+    ],
+    steps: [
+      {
+        title: '1. Criar uma Proposta / Orçamento',
+        description:
+          'Acesse o menu "Orçamentos" e clique em "+ Novo Orçamento". Preencha o cliente, a validade da proposta e os itens/serviços.',
+      },
+      {
+        title: '2. Compartilhar pelo Aplicativo de Escolha',
+        description:
+          'No card do orçamento, clique em "Compartilhar". Você pode abrir o WhatsApp com mensagem formatada pronta, disparar pelo seu leitor de e-mail ou gerar o PDF.',
+        tip: 'O sistema não utiliza APIs pagas de disparo automático: você escolhe como e por onde enviar mantendo o controle total.',
+      },
+      {
+        title: '3. Converter em Venda',
+        description:
+          'Assim que o cliente aprovar o orçamento, clique no botão "Vender" para transformá-lo imediatamente em uma venda registrada no faturamento.',
+      },
+    ],
+  },
+  {
+    id: 'catalogo-produtos-fotos',
+    category: 'produtos',
+    categoryLabel: 'Produtos & Preços',
+    title: 'Catálogo Visual de Produtos com Fotos',
+    shortDescription:
+      'Envie fotos para cada produto do seu inventário e utilize a visão em catálogo de cards com busca e status de estoque.',
+    iconName: 'Package',
+    route: '/estoque',
+    badge: 'Novidade',
+    keywords: ['catalogo', 'fotos', 'imagem', 'produtos', 'estoque', 'cards', 'galeria'],
+    highlights: [
+      'Upload de imagens de até 5MB armazenadas no PocketBase.',
+      'Alternador fácil entre visualização em Grade de Catálogo e Tabela tradicional.',
+      'Indicadores visuais de estoque disponível, baixo ou esgotado sobre cada foto.',
+    ],
+    steps: [
+      {
+        title: '1. Adicionar Foto ao Produto',
+        description:
+          'No módulo Estoque, clique em "+ Novo Produto" ou edite um item existente. Na seção "Foto do Produto (Catálogo)", escolha uma imagem PNG ou JPG.',
+      },
+      {
+        title: '2. Alternar para a Visão em Catálogo',
+        description:
+          'No topo do módulo de Estoque, utilize o botão "Catálogo" para ver os cards com foto, preço de venda, markup e quantidade disponível.',
+      },
+    ],
+  },
+  {
+    id: 'cotacoes-comparativo-fornecedores',
+    category: 'produtos',
+    categoryLabel: 'Produtos & Preços',
+    title: 'Cotações & Comparativo de Fornecedores',
+    shortDescription:
+      'Compare preços e prazos de múltiplos fornecedores para insumos e aplique o menor custo diretamente no estoque.',
+    iconName: 'Scale',
+    route: '/cotacoes',
+    badge: 'Novidade',
+    keywords: ['cotações', 'fornecedores', 'menor preço', 'compras', 'insumos', 'comparativo'],
+    highlights: [
+      'Destaque visual automático da oferta de menor preço entre os fornecedores.',
+      'Botão "Usar este Custo" para sincronizar o preço de custo no estoque do produto com 1 clique.',
+      'Histórico completo de cotações para embasar negociações de compras.',
+    ],
+    steps: [
+      {
+        title: '1. Registrar Nova Cotação',
+        description:
+          'Acesse "Cotações de Fornecedores" no menu Produtos & Compras e clique em "+ Nova Cotação".',
+      },
+      {
+        title: '2. Adicionar Fornecedores e Preços',
+        description:
+          'Digite o nome, contato e o preço unitário cotado por cada distribuidor ou fornecedor.',
+      },
+      {
+        title: '3. Aplicar ao Custo do Estoque',
+        description:
+          'O sistema sinaliza o menor preço. Clique em "Usar este Custo" para atualizar automaticamente o cadastro do produto.',
+      },
+    ],
+  },
+  {
+    id: 'fluxo-caixa-projetado',
+    category: 'financeiro',
+    categoryLabel: 'Financeiro & Caixa',
+    title: 'Fluxo de Caixa Projetado (30, 60 e 90 Dias)',
+    shortDescription:
+      'Projete o saldo futuro da sua empresa cruzando saldo atual, contas a receber e contas a pagar futuras.',
+    iconName: 'LineChart',
+    route: '/relatorios',
+    badge: 'Novidade',
+    keywords: [
+      'fluxo de caixa projetado',
+      'projeção',
+      'futuro',
+      'saldo futuro',
+      'previsão',
+      'saldo negativo',
+    ],
+    highlights: [
+      'Projeção dia a dia para os próximos 30, 60 ou 90 dias.',
+      'Gráfico de linha dinâmico mostrando a evolução acumulada do caixa.',
+      'Alerta preventivo de dias com risco de saldo negativo para você antecipar cobranças.',
+    ],
+    steps: [
+      {
+        title: '1. Acessar a Aba Fluxo Projetado',
+        description: 'No menu Relatórios, selecione a aba "Fluxo de Caixa Projetado".',
+      },
+      {
+        title: '2. Escolher o Horizonte',
+        description:
+          'Alterne entre 30, 60 ou 90 dias para visualizar a linha do tempo do saldo projetado.',
+      },
+      {
+        title: '3. Exportar Projeção',
+        description:
+          'Clique no botão "CSV" para baixar a planilha detalhada da projeção financeira.',
+      },
+    ],
+  },
+  {
+    id: 'empresa-logo-backup',
+    category: 'comeco',
+    categoryLabel: 'Primeiros Passos',
+    title: 'Logotipo da Empresa & Backup Completo',
+    shortDescription:
+      'Como personalizar o ERP com a imagem da sua marca e baixar uma cópia completa de todos os dados do negócio.',
+    iconName: 'Building2',
+    route: '/configuracoes',
+    badge: 'Essencial',
+    keywords: [
+      'logo',
+      'logotipo',
+      'imagem da empresa',
+      'backup',
+      'exportar dados',
+      'segurança',
+      'json',
+    ],
+    highlights: [
+      'Upload de PNG/JPG para exibir no menu, topo mobile e documentos da empresa.',
+      'Exportação em formato JSON estruturado com todos os registros e links das fotos.',
+    ],
+    steps: [
+      {
+        title: '1. Upload do Logotipo',
+        description:
+          'Em Configurações da Empresa, selecione uma imagem PNG ou JPG de até 5MB no bloco de Logo.',
+      },
+      {
+        title: '2. Backup Completo da Empresa',
+        description:
+          'No rodapé das Configurações, clique em "Exportar Backup Completo (.json)" para baixar um arquivo seguro com todos os seus clientes, produtos, vendas e finanças.',
+      },
+    ],
+  },
+  {
     id: 'primeiro-acesso',
     category: 'comeco',
     categoryLabel: 'Primeiros Passos',

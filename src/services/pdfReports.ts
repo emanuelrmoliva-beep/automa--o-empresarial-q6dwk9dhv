@@ -26,6 +26,7 @@ function drawHeader({ doc, company, title, subtitle, period }: HeaderConfig): nu
   doc.setLineWidth(0.5)
   doc.line(0, 33, pageWidth, 33)
 
+  // Se a empresa possui logotipo, desenhar indicação visual limpa no PDF
   // Company Name & CNPJ
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(14)

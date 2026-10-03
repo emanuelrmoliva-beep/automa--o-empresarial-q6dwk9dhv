@@ -11,6 +11,11 @@ import {
   PlusCircle,
   Check,
   Loader2,
+  Grid,
+  List,
+  UploadCloud,
+  X,
+  Image as ImageIcon,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
@@ -21,6 +26,7 @@ import {
   updateProduct,
   deleteProduct,
   createMovement,
+  getPbFileUrl,
 } from '@/services/erp'
 import type { Product } from '@/types/erp'
 import { formatCurrency } from '@/lib/formatters'
@@ -54,6 +60,7 @@ export const Estoque: React.FC = () => {
 
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('Todos')
+  const [viewMode, setViewMode] = useState<'catalog' | 'table'>('catalog')
 
   // Modal Novo / Editar
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -65,6 +72,9 @@ export const Estoque: React.FC = () => {
   const [sellingPrice, setSellingPrice] = useState('')
   const [quantity, setQuantity] = useState('0')
   const [minStock, setMinStock] = useState('5')
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [removePhoto, setRemovePhoto] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   // Modal Ajuste Rápido de Estoque
@@ -103,6 +113,9 @@ export const Estoque: React.FC = () => {
     setSellingPrice('')
     setQuantity('0')
     setMinStock('5')
+    setPhotoFile(null)
+    setPhotoPreview(null)
+    setRemovePhoto(false)
     setIsModalOpen(true)
   }
 
@@ -115,7 +128,40 @@ export const Estoque: React.FC = () => {
     setSellingPrice(p.selling_price.toString())
     setQuantity(p.quantity.toString())
     setMinStock(p.min_stock?.toString() || '0')
+    if (p.photo) {
+      setPhotoPreview(getPbFileUrl('products', p.id, p.photo))
+    } else {
+      setPhotoPreview(null)
+    }
+    setPhotoFile(null)
+    setRemovePhoto(false)
     setIsModalOpen(true)
+  }
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      toast({
+        variant: 'destructive',
+        title: 'Arquivo inválido',
+        description: 'Envie uma foto PNG ou JPG.',
+      })
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        variant: 'destructive',
+        title: 'Arquivo muito grande',
+        description: 'Máximo permitido: 5MB.',
+      })
+      return
+    }
+    setPhotoFile(file)
+    setRemovePhoto(false)
+    const reader = new FileReader()
+    reader.onload = () => setPhotoPreview(reader.result as string)
+    reader.readAsDataURL(file)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -134,28 +180,27 @@ export const Estoque: React.FC = () => {
 
     try {
       setSubmitting(true)
+      const formData = new FormData()
+      formData.append('name', name.trim())
+      formData.append('sku', sku || `SKU-${Date.now().toString().slice(-6)}`)
+      formData.append('category', category)
+      formData.append('cost_price', String(numCost))
+      formData.append('selling_price', String(numSell))
+      formData.append('quantity', String(numQty))
+      formData.append('min_stock', String(numMin))
+
+      if (photoFile) {
+        formData.append('photo', photoFile)
+      } else if (removePhoto) {
+        formData.append('photo', '')
+      }
+
       if (editingProduct) {
-        await updateProduct(editingProduct.id, {
-          name,
-          sku: sku || `SKU-${Date.now().toString().slice(-6)}`,
-          category,
-          cost_price: numCost,
-          selling_price: numSell,
-          quantity: numQty,
-          min_stock: numMin,
-        })
+        await updateProduct(editingProduct.id, formData)
         toast({ title: 'Produto atualizado com sucesso!' })
       } else {
-        await createProduct({
-          company_id: company.id,
-          name,
-          sku: sku || `SKU-${Date.now().toString().slice(-6)}`,
-          category,
-          cost_price: numCost,
-          selling_price: numSell,
-          quantity: numQty,
-          min_stock: numMin,
-        })
+        formData.append('company_id', company.id)
+        await createProduct(formData)
         toast({ title: 'Produto cadastrado com sucesso!' })
       }
       setIsModalOpen(false)
@@ -273,23 +318,70 @@ export const Estoque: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={handleExportCsv}
-            className="border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-semibold h-9"
-          >
-            <Download className="w-4 h-4 mr-1.5" /> Relatório CSV
-          </Button>
+          {/* Alternador de Visualização: Catálogo (Cards) ou Tabela */}
+          <div className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setViewMode('catalog')}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition ${
+                viewMode === 'catalog'
+                  ? 'bg-emerald-600 text-white shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Grid className="w-3.5 h-3.5" />
+              <span>Catálogo</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('table')}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition ${
+                viewMode === 'table'
+                  ? 'bg-emerald-600 text-white shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <List className="w-3.5 h-3.5" />
+              <span>Tabela</span>
+            </button>
+          </div>
+
+          {/* Alternador de Visualização: Catálogo (Cards com foto) ou Tabela */}
+          <div className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setViewMode('catalog')}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition ${
+                viewMode === 'catalog'
+                  ? 'bg-emerald-600 text-white shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Grid className="w-3.5 h-3.5" />
+              <span>Catálogo</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('table')}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition ${
+                viewMode === 'table'
+                  ? 'bg-emerald-600 text-white shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <List className="w-3.5 h-3.5" />
+              <span>Tabela</span>
+            </button>
+          </div>
 
           <Button
             onClick={openCreateModal}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold h-9 px-4 shadow-sm flex items-center gap-1.5"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm shadow-sm"
           >
-            <Plus className="w-4 h-4" /> Novo Produto
+            <Plus className="w-4 h-4 mr-1.5" /> Novo Produto
           </Button>
         </div>
       </div>
-
       {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
@@ -346,15 +438,136 @@ export const Estoque: React.FC = () => {
         </div>
       </div>
 
-      {/* Products List */}
+      {/* Products List: Catálogo com Fotos ou Tabela */}
       {filteredProducts.length === 0 ? (
         <EmptyState
           icon={<Package className="w-8 h-8" />}
           title="Nenhum produto em estoque"
-          description="Cadastre produtos para controlar custos, preços e reposição."
+          description="Cadastre produtos com fotos para controlar custos, preços e reposição."
           actionLabel="+ Novo Produto"
           onAction={openCreateModal}
         />
+      ) : viewMode === 'catalog' ? (
+        /* VISUALIZAÇÃO: CATÁLOGO DE PRODUTOS COM FOTO */
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {filteredProducts.map((p) => {
+            const isLow = p.quantity <= (p.min_stock || 0) && p.quantity > 0
+            const isOut = p.quantity === 0
+            const photoUrl = p.photo ? getPbFileUrl('products', p.id, p.photo) : null
+
+            return (
+              <div
+                key={p.id}
+                className={`bg-white rounded-xl border border-slate-200 shadow-2xs hover:shadow-md transition flex flex-col justify-between overflow-hidden group ${
+                  isOut ? 'border-red-200' : isLow ? 'border-amber-200' : ''
+                }`}
+              >
+                {/* Foto ou Ícone */}
+                <div className="relative aspect-4/3 w-full bg-slate-50 border-b border-slate-100 flex items-center justify-center overflow-hidden">
+                  {photoUrl ? (
+                    <img
+                      src={photoUrl}
+                      alt={p.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-slate-300">
+                      <Package className="w-12 h-12 stroke-1 text-slate-300" />
+                      <span className="text-[10px] text-slate-400 mt-1">Sem foto</span>
+                    </div>
+                  )}
+
+                  {/* Badge de status */}
+                  <div className="absolute top-2.5 right-2.5">
+                    {isOut ? (
+                      <span className="text-[10px] font-semibold text-red-700 bg-red-100/90 backdrop-blur-xs px-2 py-0.5 rounded-full shadow-2xs">
+                        Esgotado
+                      </span>
+                    ) : isLow ? (
+                      <span className="text-[10px] font-semibold text-amber-800 bg-amber-100/90 backdrop-blur-xs px-2 py-0.5 rounded-full shadow-2xs">
+                        Estoque Baixo
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-100/90 backdrop-blur-xs px-2 py-0.5 rounded-full shadow-2xs">
+                        Disponível
+                      </span>
+                    )}
+                  </div>
+
+                  {/* SKU */}
+                  {p.sku && (
+                    <div className="absolute bottom-2 left-2">
+                      <span className="text-[10px] font-mono bg-slate-900/70 text-white px-2 py-0.5 rounded backdrop-blur-xs">
+                        {p.sku}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Conteúdo do Card */}
+                <div className="p-3.5 space-y-2 flex-1 flex flex-col justify-between">
+                  <div>
+                    <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded inline-block mb-1">
+                      {p.category}
+                    </span>
+                    <h4 className="font-bold text-slate-900 text-sm line-clamp-1" title={p.name}>
+                      {p.name}
+                    </h4>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-100 space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-400">Estoque:</span>
+                      <button
+                        onClick={() => setAdjustTarget(p)}
+                        className="inline-flex items-center gap-1 font-mono font-bold text-slate-800 hover:text-emerald-600 transition"
+                      >
+                        <span>{p.quantity} un.</span>
+                        <span className="text-[10px] text-slate-400">±</span>
+                      </button>
+                    </div>
+
+                    <div className="flex items-baseline justify-between pt-1">
+                      <span className="text-[11px] text-slate-400">
+                        Custo: {formatCurrency(p.cost_price)}
+                      </span>
+                      <span className="text-base font-bold text-emerald-700">
+                        {formatCurrency(p.selling_price)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Ações do Card */}
+                <div className="bg-slate-50 px-3.5 py-2 border-t border-slate-100 flex items-center justify-between">
+                  <button
+                    onClick={() => setAdjustTarget(p)}
+                    className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800"
+                  >
+                    Ajustar Estoque
+                  </button>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => openEditModal(p)}
+                      className="p-1 rounded text-slate-400 hover:text-slate-800 hover:bg-slate-200 transition"
+                      title="Editar"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setDeleteTargetId(p.id)}
+                      className="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
+                      title="Excluir"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
       ) : (
         <>
           {/* Mobile Cards (telas pequenas) */}
@@ -572,6 +785,51 @@ export const Estoque: React.FC = () => {
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4 py-2">
+            {/* Foto do Produto */}
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center gap-4">
+              <div className="w-16 h-16 rounded-xl border-2 border-dashed border-slate-200 bg-white flex items-center justify-center overflow-hidden shrink-0">
+                {photoPreview ? (
+                  <img src={photoPreview} alt="Foto" className="w-full h-full object-cover" />
+                ) : (
+                  <ImageIcon className="w-6 h-6 text-slate-400" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="text-xs font-semibold text-slate-800 block">
+                  Foto do Produto (Catálogo)
+                </span>
+                <span className="text-[11px] text-slate-500 block">
+                  PNG ou JPG até 5MB. Exibida no catálogo de produtos.
+                </span>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <label className="cursor-pointer text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded border border-emerald-200 inline-flex items-center gap-1 transition">
+                    <UploadCloud className="w-3.5 h-3.5" />
+                    <span>{photoPreview ? 'Trocar Foto' : 'Enviar Foto'}</span>
+                    <input
+                      type="file"
+                      accept="image/png, image/jpeg, image/webp"
+                      onChange={handlePhotoChange}
+                      className="hidden"
+                    />
+                  </label>
+                  {photoPreview && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPhotoFile(null)
+                        setPhotoPreview(null)
+                        setRemovePhoto(true)
+                      }}
+                      className="text-xs text-red-600 hover:text-red-700 p-1"
+                      title="Remover Foto"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-1.5">
               <Label htmlFor="prodName" className="text-xs font-semibold text-slate-700">
                 Nome do Produto / Item <span className="text-red-500">*</span>

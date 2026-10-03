@@ -9,6 +9,9 @@ import {
   CheckCircle2,
   Loader2,
   Sparkles,
+  UploadCloud,
+  X,
+  Image as ImageIcon,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
@@ -94,9 +97,38 @@ export const CompanyOnboarding: React.FC = () => {
   const [phone, setPhone] = useState('')
   const [contactEmail, setContactEmail] = useState(user?.email || '')
 
+  // Logo da empresa
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
+
   // Errors
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [cepLoading, setCepLoading] = useState(false)
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      toast({
+        variant: 'destructive',
+        title: 'Arquivo inválido',
+        description: 'Selecione uma imagem PNG ou JPG.',
+      })
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        variant: 'destructive',
+        title: 'Imagem muito grande',
+        description: 'Máximo permitido: 5MB.',
+      })
+      return
+    }
+    setLogoFile(file)
+    const reader = new FileReader()
+    reader.onload = () => setLogoPreview(reader.result as string)
+    reader.readAsDataURL(file)
+  }
 
   // Tratamento de CEP
   const handleCepBlur = async () => {
@@ -166,24 +198,31 @@ export const CompanyOnboarding: React.FC = () => {
 
     try {
       setLoading(true)
-      await createCompany({
-        user_id: user.id,
-        legal_name: legalName,
-        trade_name: tradeName,
-        cnpj: cnpj,
-        foundation_date: foundationDate,
-        business_activity: businessActivity,
-        business_activity_other: businessActivity === 'Outros' ? businessActivityOther : '',
-        zip_code: zipCode,
-        address: address,
-        number: number,
-        complement: complement,
-        district: district,
-        city: city,
-        state: state,
-        phone: phone,
-        contact_email: contactEmail,
-      })
+      const formData = new FormData()
+      formData.append('user_id', user.id)
+      formData.append('legal_name', legalName)
+      formData.append('trade_name', tradeName)
+      formData.append('cnpj', cnpj)
+      formData.append('foundation_date', foundationDate)
+      formData.append('business_activity', businessActivity)
+      formData.append(
+        'business_activity_other',
+        businessActivity === 'Outros' ? businessActivityOther : '',
+      )
+      formData.append('zip_code', zipCode)
+      formData.append('address', address)
+      formData.append('number', number)
+      formData.append('complement', complement)
+      formData.append('district', district)
+      formData.append('city', city)
+      formData.append('state', state)
+      formData.append('phone', phone)
+      formData.append('contact_email', contactEmail)
+      if (logoFile) {
+        formData.append('logo', logoFile)
+      }
+
+      await createCompany(formData)
 
       await refreshCompany()
       setSuccessComplete(true)
@@ -309,6 +348,54 @@ export const CompanyOnboarding: React.FC = () => {
                 <p className="text-xs sm:text-sm text-slate-500">
                   Estas informações serão usadas em seus documentos e relatórios gerenciais.
                 </p>
+              </div>
+
+              {/* Upload de Logo no Onboarding */}
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center gap-4">
+                <div className="w-16 h-16 rounded-xl border-2 border-dashed border-slate-200 bg-white flex items-center justify-center overflow-hidden shrink-0">
+                  {logoPreview ? (
+                    <img
+                      src={logoPreview}
+                      alt="Logo"
+                      className="w-full h-full object-contain p-1"
+                    />
+                  ) : (
+                    <ImageIcon className="w-6 h-6 text-slate-400" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-semibold text-slate-800 block">
+                    Logo / Imagem da Empresa (Opcional)
+                  </span>
+                  <span className="text-[11px] text-slate-500 block">
+                    PNG ou JPG até 5MB. Poderá ser alterado a qualquer momento.
+                  </span>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <label className="cursor-pointer text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded border border-emerald-200 inline-flex items-center gap-1 transition">
+                      <UploadCloud className="w-3.5 h-3.5" />
+                      <span>{logoPreview ? 'Alterar Logo' : 'Enviar Logo'}</span>
+                      <input
+                        type="file"
+                        accept="image/png, image/jpeg, image/webp"
+                        onChange={handleLogoChange}
+                        className="hidden"
+                      />
+                    </label>
+                    {logoPreview && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLogoFile(null)
+                          setLogoPreview(null)
+                        }}
+                        className="text-xs text-red-600 hover:text-red-700 p-1"
+                        title="Remover"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

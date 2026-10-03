@@ -16,6 +16,8 @@ import CompanyOnboarding from '@/pages/CompanyOnboarding'
 // Protected ERP Modules
 import Dashboard from '@/pages/Dashboard'
 import Vendas from '@/pages/Vendas'
+import Orcamentos from '@/pages/Orcamentos'
+import Cotacoes from '@/pages/Cotacoes'
 import Clientes from '@/pages/Clientes'
 import Estoque from '@/pages/Estoque'
 import FormacaoDePrecos from '@/pages/FormacaoDePrecos'
@@ -94,6 +96,8 @@ const App = () => (
             <Route path="/metas" element={<Metas />} />
             <Route path="/relatorios" element={<Relatorios />} />
             <Route path="/vendas" element={<Vendas />} />
+            <Route path="/orcamentos" element={<Orcamentos />} />
+            <Route path="/cotacoes" element={<Cotacoes />} />
             <Route path="/clientes" element={<Clientes />} />
             <Route path="/estoque" element={<Estoque />} />
             <Route path="/formacao-de-precos" element={<FormacaoDePrecos />} />

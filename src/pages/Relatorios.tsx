@@ -15,7 +15,19 @@ import {
   CreditCard,
   Building2,
   FileText,
+  LineChart as LineChartIcon,
 } from 'lucide-react'
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ReferenceLine,
+} from 'recharts'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
 import { useRealtime } from '@/hooks/use-realtime'
@@ -51,6 +63,9 @@ export const Relatorios: React.FC = () => {
   // Filtro de mês para o resumo mensal
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear())
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth())
+
+  // Projeção de Fluxo de Caixa (30, 60 ou 90 dias)
+  const [projectionDays, setProjectionDays] = useState<30 | 60 | 90>(30)
 
   const loadData = useCallback(async () => {
     if (!company) return
@@ -162,6 +177,81 @@ export const Relatorios: React.FC = () => {
       todos: allTitles,
     }
   }, [payables, receivables])
+
+  // 1.1 Saldo Atual Realizado (Entradas Recebidas - Despesas Pagas)
+  const currentActualBalance = useMemo(() => {
+    const totalEntradas = entries
+      .filter((e) => e.status === 'Recebida')
+      .reduce((sum, e) => sum + (Number(e.amount) || 0), 0)
+    const totalDespesas = expenses
+      .filter((e) => e.status === 'Paga')
+      .reduce((sum, e) => sum + (Number(e.amount) || 0), 0)
+    return totalEntradas - totalDespesas
+  }, [entries, expenses])
+
+  // 1.2 Projeção de Fluxo de Caixa Futuro (Dia a dia)
+  const projectionData = useMemo(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    const daysCount = projectionDays
+    let runningBalance = currentActualBalance
+    const timeline = []
+
+    let totalReceivablesPeriod = 0
+    let totalPayablesPeriod = 0
+    let daysWithNegativeBalance = 0
+    let lowestProjectedBalance = currentActualBalance
+
+    for (let i = 0; i < daysCount; i++) {
+      const d = new Date(today)
+      d.setDate(d.getDate() + i)
+      const isoDate = d.toISOString().split('T')[0]
+      const label = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`
+
+      // Contas a receber no dia
+      const recDay = receivables
+        .filter((r) => r.status === 'Em aberto' && r.due_date.split('T')[0] === isoDate)
+        .reduce((sum, r) => sum + (Number(r.amount) || 0), 0)
+
+      // Contas a pagar no dia
+      const payDay = payables
+        .filter((p) => p.status === 'Em aberto' && p.due_date.split('T')[0] === isoDate)
+        .reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
+
+      const netChange = recDay - payDay
+      runningBalance += netChange
+
+      totalReceivablesPeriod += recDay
+      totalPayablesPeriod += payDay
+
+      if (runningBalance < 0) {
+        daysWithNegativeBalance++
+      }
+      if (runningBalance < lowestProjectedBalance) {
+        lowestProjectedBalance = runningBalance
+      }
+
+      timeline.push({
+        date: isoDate,
+        label,
+        receivables: recDay,
+        payables: payDay,
+        netChange,
+        projectedBalance: Math.round(runningBalance * 100) / 100,
+        isNegative: runningBalance < 0,
+      })
+    }
+
+    return {
+      timeline,
+      totalReceivablesPeriod,
+      totalPayablesPeriod,
+      daysWithNegativeBalance,
+      lowestProjectedBalance,
+      finalProjectedBalance: runningBalance,
+    }
+  }, [currentActualBalance, payables, receivables, projectionDays])
 
   // 2. Resumo Mensal Consolidado (DRE Gerencial Simples)
   const monthlySummary = useMemo(() => {
@@ -560,6 +650,29 @@ export const Relatorios: React.FC = () => {
     'Dezembro',
   ]
 
+  // Exportar Projeção de Fluxo de Caixa (CSV)
+  const handleExportProjecaoCsv = () => {
+    const headers = [
+      'Data',
+      'Contas a Receber (R$)',
+      'Contas a Pagar (R$)',
+      'Variação Líquida (R$)',
+      'Saldo Projetado Acumulado (R$)',
+    ]
+    const rows = projectionData.timeline.map((item) => [
+      item.label,
+      item.receivables,
+      item.payables,
+      item.netChange,
+      item.projectedBalance,
+    ])
+    downloadCsv(
+      `fluxo_caixa_projetado_${projectionDays}_dias_${new Date().toISOString().split('T')[0]}`,
+      headers,
+      rows,
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -567,16 +680,23 @@ export const Relatorios: React.FC = () => {
         <div>
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
             <FileSpreadsheet className="w-6 h-6 text-emerald-600" />
-            Central de Relatórios Gerenciais
+            Central de Relatórios & Projeção Financeira
           </h2>
           <p className="text-sm text-slate-500">
-            Acompanhe vencimentos futuros, balanço mensal de resultados e exporte para CSV.
+            Acompanhe vencimentos futuros, projeção de fluxo de caixa (30/60/90 dias), balanço
+            mensal e exporte para CSV ou PDF.
           </p>
         </div>
       </div>
 
-      <Tabs defaultValue="vencimentos" className="w-full space-y-6">
-        <TabsList className="bg-white border border-slate-200 p-1 rounded-xl shadow-xs">
+      <Tabs defaultValue="projecao" className="w-full space-y-6">
+        <TabsList className="bg-white border border-slate-200 p-1 rounded-xl shadow-xs flex-wrap">
+          <TabsTrigger
+            value="projecao"
+            className="text-xs font-semibold data-[state=active]:bg-emerald-600 data-[state=active]:text-white rounded-lg px-4"
+          >
+            Fluxo de Caixa Projetado
+          </TabsTrigger>
           <TabsTrigger
             value="vencimentos"
             className="text-xs font-semibold data-[state=active]:bg-emerald-600 data-[state=active]:text-white rounded-lg px-4"
@@ -590,6 +710,243 @@ export const Relatorios: React.FC = () => {
             Resumo Mensal Consolidado
           </TabsTrigger>
         </TabsList>
+
+        {/* ABA: FLUXO DE CAIXA PROJETADO */}
+        <TabsContent value="projecao" className="space-y-6 mt-0">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+            <div>
+              <h3 className="font-bold text-sm text-slate-800 flex items-center gap-2">
+                <LineChartIcon className="w-4 h-4 text-emerald-600" />
+                Projeção Financeira Acumulada
+              </h3>
+              <p className="text-xs text-slate-500">
+                Saldo atual realizado + Contas a receber programadas - Contas a pagar por data de
+                vencimento.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Botões de horizonte */}
+              <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5">
+                {[30, 60, 90].map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => setProjectionDays(d as 30 | 60 | 90)}
+                    className={`px-3 py-1 rounded text-xs font-semibold transition ${
+                      projectionDays === d
+                        ? 'bg-emerald-600 text-white shadow-2xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    {d} Dias
+                  </button>
+                ))}
+              </div>
+
+              <Button
+                variant="outline"
+                onClick={handleExportProjecaoCsv}
+                className="border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-semibold h-9 px-3 shadow-xs flex items-center gap-1.5"
+              >
+                <Download className="w-3.5 h-3.5" /> CSV
+              </Button>
+            </div>
+          </div>
+
+          {/* Cards de Métricas da Projeção */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+              <span className="text-xs font-semibold uppercase text-slate-500">
+                Saldo Atual Realizado
+              </span>
+              <p
+                className={`text-2xl font-bold font-mono mt-2 ${currentActualBalance >= 0 ? 'text-emerald-700' : 'text-red-700'}`}
+              >
+                {formatCurrency(currentActualBalance)}
+              </p>
+              <p className="text-[11px] text-slate-400 mt-1">Entradas - saídas pagas hoje</p>
+            </div>
+
+            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+              <span className="text-xs font-semibold uppercase text-slate-500">
+                Previsão de Recebimentos ({projectionDays}d)
+              </span>
+              <p className="text-2xl font-bold font-mono text-emerald-700 mt-2">
+                +{formatCurrency(projectionData.totalReceivablesPeriod)}
+              </p>
+              <p className="text-[11px] text-slate-400 mt-1">Contas a receber no período</p>
+            </div>
+
+            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+              <span className="text-xs font-semibold uppercase text-slate-500">
+                Previsão de Pagamentos ({projectionDays}d)
+              </span>
+              <p className="text-2xl font-bold font-mono text-red-700 mt-2">
+                -{formatCurrency(projectionData.totalPayablesPeriod)}
+              </p>
+              <p className="text-[11px] text-slate-400 mt-1">Contas a pagar no período</p>
+            </div>
+
+            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+              <span className="text-xs font-semibold uppercase text-slate-500">
+                Saldo Final Projetado
+              </span>
+              <p
+                className={`text-2xl font-bold font-mono mt-2 ${projectionData.finalProjectedBalance >= 0 ? 'text-emerald-700' : 'text-red-700'}`}
+              >
+                {formatCurrency(projectionData.finalProjectedBalance)}
+              </p>
+              <p className="text-[11px] text-slate-400 mt-1">
+                {projectionData.daysWithNegativeBalance > 0 ? (
+                  <span className="text-amber-600 font-semibold">
+                    ⚠️ {projectionData.daysWithNegativeBalance} dia(s) com saldo negativo
+                  </span>
+                ) : (
+                  <span className="text-emerald-600 font-medium">
+                    ✓ Sem risco de saldo negativo
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+
+          {/* Gráfico de Linha do Saldo Acumulado */}
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-bold text-sm text-slate-800">
+                  Evolução do Saldo Projetado Acumulado
+                </h4>
+                <p className="text-xs text-slate-500">
+                  Linha verde indica fluxo de caixa saudável; linha pontilhada marca o zero.
+                </p>
+              </div>
+              <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md">
+                Menor Saldo:{' '}
+                <strong
+                  className={
+                    projectionData.lowestProjectedBalance < 0 ? 'text-red-600' : 'text-emerald-700'
+                  }
+                >
+                  {formatCurrency(projectionData.lowestProjectedBalance)}
+                </strong>
+              </span>
+            </div>
+
+            <div className="h-72 w-full pt-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={projectionData.timeline}
+                  margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="label" stroke="#94a3b8" fontSize={11} tickLine={false} />
+                  <YAxis
+                    stroke="#94a3b8"
+                    fontSize={11}
+                    tickFormatter={(val) => `R$ ${(val / 1000).toFixed(0)}k`}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    formatter={(val: any) => [formatCurrency(Number(val)), 'Saldo Projetado']}
+                    labelFormatter={(label) => `Dia ${label}`}
+                    contentStyle={{
+                      backgroundColor: '#0f172a',
+                      borderColor: '#334155',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      fontSize: '12px',
+                    }}
+                  />
+                  <ReferenceLine
+                    y={0}
+                    stroke="#ef4444"
+                    strokeDasharray="4 4"
+                    label={{
+                      value: 'Zero (R$ 0)',
+                      fill: '#ef4444',
+                      fontSize: 10,
+                      position: 'insideBottomRight',
+                    }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="projectedBalance"
+                    stroke="#059669"
+                    strokeWidth={2.5}
+                    dot={{ r: 2, fill: '#059669' }}
+                    activeDot={{ r: 5, fill: '#10b981' }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Tabela de Dias Críticos ou Resumo da Linha do Tempo */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+            <div className="p-4 bg-slate-50 border-b border-slate-200">
+              <h4 className="font-bold text-xs sm:text-sm text-slate-800">
+                Detalhamento dos Próximos Dias com Movimentação
+              </h4>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-medium">
+                  <tr>
+                    <th className="py-2.5 px-4">Data</th>
+                    <th className="py-2.5 px-4 text-right">Contas a Receber</th>
+                    <th className="py-2.5 px-4 text-right">Contas a Pagar</th>
+                    <th className="py-2.5 px-4 text-right">Variação do Dia</th>
+                    <th className="py-2.5 px-4 text-right">Saldo Acumulado</th>
+                    <th className="py-2.5 px-4 text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {projectionData.timeline
+                    .filter((item) => item.receivables > 0 || item.payables > 0 || item.isNegative)
+                    .slice(0, 20)
+                    .map((item, idx) => (
+                      <tr
+                        key={idx}
+                        className={`transition ${item.isNegative ? 'bg-red-50/40' : 'hover:bg-slate-50/60'}`}
+                      >
+                        <td className="py-2.5 px-4 font-mono font-medium text-slate-800">
+                          {formatDatePtBr(item.date)}
+                        </td>
+                        <td className="py-2.5 px-4 text-right font-mono text-emerald-700">
+                          {item.receivables > 0 ? `+${formatCurrency(item.receivables)}` : '—'}
+                        </td>
+                        <td className="py-2.5 px-4 text-right font-mono text-red-700">
+                          {item.payables > 0 ? `-${formatCurrency(item.payables)}` : '—'}
+                        </td>
+                        <td className="py-2.5 px-4 text-right font-mono text-slate-700">
+                          {item.netChange !== 0 ? formatCurrency(item.netChange) : 'R$ 0,00'}
+                        </td>
+                        <td
+                          className={`py-2.5 px-4 text-right font-mono font-bold ${item.isNegative ? 'text-red-700' : 'text-emerald-700'}`}
+                        >
+                          {formatCurrency(item.projectedBalance)}
+                        </td>
+                        <td className="py-2.5 px-4 text-center">
+                          {item.isNegative ? (
+                            <span className="text-[10px] font-bold text-red-800 bg-red-100 px-2 py-0.5 rounded-full">
+                              Saldo Negativo
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-medium text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                              Positivo
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </TabsContent>
 
         {/* ABA 1: VENCIMENTOS FUTUROS */}
         <TabsContent value="vencimentos" className="space-y-6 mt-0">

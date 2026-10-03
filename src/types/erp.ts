@@ -16,6 +16,7 @@ export interface Company {
   state: string
   phone: string
   contact_email: string
+  logo?: string
   created: string
   updated: string
 }
@@ -30,6 +31,7 @@ export interface Product {
   selling_price: number
   quantity: number
   min_stock?: number
+  photo?: string
   created: string
   updated: string
 }
@@ -220,4 +222,77 @@ export interface AgendaEvent {
   expand?: {
     customer_id?: Customer
   }
+}
+
+export interface QuoteItem {
+  product_id?: string
+  name: string
+  sku?: string
+  quantity: number
+  unit_price: number
+  total: number
+}
+
+export interface Quote {
+  id: string
+  company_id: string
+  customer_id?: string
+  quote_number?: string
+  title: string
+  issue_date: string
+  valid_until?: string
+  customer_name?: string
+  customer_contact?: string
+  status: 'Rascunho' | 'Enviado' | 'Aprovado' | 'Recusado' | 'Convertido'
+  items?: QuoteItem[]
+  subtotal?: number
+  discount?: number
+  total_amount: number
+  payment_terms?: string
+  notes?: string
+  created: string
+  updated: string
+  expand?: {
+    customer_id?: Customer
+  }
+}
+
+export interface SupplierOffer {
+  id?: string
+  supplier_name: string
+  contact?: string
+  unit_price: number
+  delivery_time?: string
+  min_order_qty?: number
+  payment_conditions?: string
+  notes?: string
+  is_selected?: boolean
+}
+
+export interface SupplierQuote {
+  id: string
+  company_id: string
+  product_id?: string
+  item_name: string
+  quote_date: string
+  quantity_needed?: number
+  status: 'Em Aberto' | 'Concluída' | 'Cancelada'
+  chosen_supplier_index?: number
+  suppliers?: SupplierOffer[]
+  notes?: string
+  created: string
+  updated: string
+  expand?: {
+    product_id?: Product
+  }
+}
+
+export interface CashFlowProjectionDay {
+  date: string
+  label: string
+  receivables: number
+  payables: number
+  netChange: number
+  projectedBalance: number
+  isNegative: boolean
 }
