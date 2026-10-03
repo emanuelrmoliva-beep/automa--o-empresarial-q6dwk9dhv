@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-03T23:03:22.058Z",
+  "generatedAt": "2026-10-03T23:12:31.619Z",
   "collections": [
     {
       "name": "users",
@@ -1362,6 +1362,100 @@
       "indexes": [
         "CREATE INDEX idx_supplier_quotes_company ON supplier_quotes (company_id, quote_date DESC)",
         "CREATE INDEX idx_supplier_quotes_product ON supplier_quotes (product_id)"
+      ]
+    },
+    {
+      "name": "loyalty_tiers",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "view": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "create": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "update": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "delete": "@request.auth.id != '' && company_id.user_id = @request.auth.id"
+      },
+      "fields": [
+        {
+          "name": "company_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "companies"
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "criterion_type",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["total_spent", "sales_count", "average_ticket", "days_recent"]
+        },
+        {
+          "name": "min_value",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "tier_order",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "badge_icon",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["trophy", "medal", "award", "crown", "star", "shield", "gem"]
+        },
+        {
+          "name": "badge_color",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["amber", "slate", "yellow", "cyan", "emerald", "violet", "rose", "blue"]
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "benefits",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "discount_percent",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_loyalty_company_order ON loyalty_tiers (company_id, tier_order ASC)"
       ]
     }
   ]

@@ -34,6 +34,14 @@ import { useToast } from '@/hooks/use-toast'
 import { useRealtime } from '@/hooks/use-realtime'
 import { getCustomerHistory, type CustomerHistoryData } from '@/services/erp'
 import { formatCurrency, formatDatePtBr } from '@/lib/formatters'
+import {
+  calculateCustomerMetrics,
+  evaluateCustomerLoyalty,
+  formatCriterionValue,
+  getCriterionLabel,
+} from '@/lib/loyalty'
+import { LoyaltyBadge } from '@/components/LoyaltyBadge'
+import { Trophy, Award, Crown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -96,8 +104,17 @@ export const ClienteHistorico: React.FC = () => {
   useRealtime('quotes', () => loadCustomerData(), !!company)
   useRealtime('receivables', () => loadCustomerData(), !!company)
   useRealtime('customers', () => loadCustomerData(), !!company)
+  useRealtime('loyalty_tiers', () => loadCustomerData(), !!company)
 
   const customer = data?.customer
+  const loyaltyTiers = data?.loyaltyTiers || []
+
+  // Avaliação de Fidelidade do Cliente Atual
+  const loyaltyEval = useMemo(() => {
+    const allSales = data?.sales || []
+    const metrics = calculateCustomerMetrics(allSales)
+    return evaluateCustomerLoyalty(metrics, loyaltyTiers)
+  }, [data?.sales, loyaltyTiers])
 
   // Filtro de data utilitário
   const isWithinPeriod = useCallback(
@@ -516,6 +533,7 @@ export const ClienteHistorico: React.FC = () => {
                 <h2 className="text-lg sm:text-2xl font-bold tracking-tight text-white">
                   {customer.name}
                 </h2>
+
                 <Badge
                   variant="outline"
                   className="bg-emerald-500/10 text-emerald-300 border-emerald-500/30 text-[10px] font-semibold uppercase tracking-wider"
@@ -527,8 +545,27 @@ export const ClienteHistorico: React.FC = () => {
                   )}
                   {customer.client_type}
                 </Badge>
-              </div>
 
+                {/* Medalha / Troféu da Classificação */}
+                {loyaltyEval.currentTier ? (
+                  <LoyaltyBadge
+                    tier={loyaltyEval.currentTier}
+                    size="md"
+                    showBenefits
+                    interactive
+                    onClick={() => navigate('/fidelidade')}
+                  />
+                ) : (
+                  <span
+                    onClick={() => navigate('/fidelidade')}
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold bg-white/10 hover:bg-white/20 text-slate-300 px-2.5 py-0.5 rounded-full border border-white/20 cursor-pointer transition"
+                    title="Ver regras do programa de fidelidade"
+                  >
+                    <Trophy className="w-3 h-3 text-amber-400" />
+                    Iniciante na Fidelidade
+                  </span>
+                )}
+              </div>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-300">
                 <span className="font-mono text-emerald-400 font-semibold">
                   Doc: {customer.document}
@@ -587,8 +624,82 @@ export const ClienteHistorico: React.FC = () => {
           </div>
         </div>
 
+        {/* Barra de Progresso para a Próxima Faixa de Fidelidade */}
+        <div className="mt-4 pt-4 border-t border-slate-800/80">
+          <div className="bg-slate-900/90 rounded-xl p-4 border border-slate-700/70 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <Trophy className="w-4 h-4 text-amber-400 shrink-0" />
+                <span className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+                  Programa de Fidelidade
+                </span>
+                {loyaltyEval.currentTier && (
+                  <span className="text-xs text-emerald-400 font-semibold">
+                    • Nível Atual: {loyaltyEval.currentTier.name}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-300 font-medium">{loyaltyEval.progressText}</p>
+              {loyaltyEval.currentTier?.benefits && (
+                <p className="text-[11px] text-slate-400">
+                  <strong className="text-slate-300">Benefícios ativos:</strong>{' '}
+                  {loyaltyEval.currentTier.benefits}
+                </p>
+              )}
+            </div>
+
+            {/* Barra Visual de Progresso */}
+            <div className="w-full md:w-80 shrink-0 space-y-1.5">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-slate-400 font-medium">
+                  {loyaltyEval.currentTier?.name || 'Início'}
+                </span>
+                <span className="font-mono font-bold text-emerald-400">
+                  {loyaltyEval.progressPercent}%
+                </span>
+                <span className="text-slate-300 font-semibold">
+                  {loyaltyEval.nextTier?.name || 'Topo Máximo'}
+                </span>
+              </div>
+              <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden border border-slate-700">
+                <div
+                  className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-500"
+                  style={{ width: `${loyaltyEval.progressPercent}%` }}
+                />
+              </div>
+              {loyaltyEval.nextTier && (
+                <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono">
+                  <span>
+                    Atual:{' '}
+                    {formatCriterionValue(
+                      loyaltyEval.metricValueForNext,
+                      loyaltyEval.nextTier.criterion_type,
+                    )}
+                  </span>
+                  <span>
+                    Alvo:{' '}
+                    {formatCriterionValue(
+                      loyaltyEval.nextTierValue,
+                      loyaltyEval.nextTier.criterion_type,
+                    )}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/fidelidade')}
+              className="text-xs text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/40 h-8 self-end md:self-auto shrink-0"
+            >
+              Configurar Regras & Faixas
+            </Button>
+          </div>
+        </div>
+
         {customer.notes && (
-          <div className="mt-4 pt-3 border-t border-slate-800 text-xs text-slate-300 italic flex items-start gap-2">
+          <div className="mt-3 pt-3 border-t border-slate-800 text-xs text-slate-300 italic flex items-start gap-2">
             <span className="font-semibold text-slate-200 not-italic">Observações:</span>
             <span>{customer.notes}</span>
           </div>

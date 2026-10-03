@@ -14,6 +14,7 @@ import type {
   ErpNotification,
   Quote,
   SupplierQuote,
+  LoyaltyTier,
 } from '@/types/erp'
 
 // PocketBase File URL helper
@@ -196,18 +197,107 @@ export async function getReceivables(companyId: string): Promise<Receivable[]> {
   })
 }
 
+// Loyalty Tiers (Programa de Fidelidade)
+export async function getLoyaltyTiers(companyId: string): Promise<LoyaltyTier[]> {
+  try {
+    return await pb.collection('loyalty_tiers').getFullList<LoyaltyTier>({
+      filter: `company_id = "${companyId}"`,
+      sort: 'tier_order',
+    })
+  } catch (err) {
+    console.error('Erro ao buscar faixas de fidelidade:', err)
+    return []
+  }
+}
+
+export async function createLoyaltyTier(data: Partial<LoyaltyTier>): Promise<LoyaltyTier> {
+  return await pb.collection('loyalty_tiers').create<LoyaltyTier>(data)
+}
+
+export async function updateLoyaltyTier(
+  id: string,
+  data: Partial<LoyaltyTier>,
+): Promise<LoyaltyTier> {
+  return await pb.collection('loyalty_tiers').update<LoyaltyTier>(id, data)
+}
+
+export async function deleteLoyaltyTier(id: string): Promise<boolean> {
+  return await pb.collection('loyalty_tiers').delete(id)
+}
+
+export async function createDefaultLoyaltyTiers(companyId: string): Promise<LoyaltyTier[]> {
+  const defaults: Array<Omit<LoyaltyTier, 'id' | 'created' | 'updated'>> = [
+    {
+      company_id: companyId,
+      name: 'Bronze',
+      criterion_type: 'total_spent',
+      min_value: 0,
+      tier_order: 1,
+      badge_icon: 'shield',
+      badge_color: 'amber',
+      description: 'Faixa inicial de entrada de novos clientes.',
+      benefits: 'Acesso às novidades e promoções sazonais.',
+      discount_percent: 0,
+    },
+    {
+      company_id: companyId,
+      name: 'Prata',
+      criterion_type: 'total_spent',
+      min_value: 500,
+      tier_order: 2,
+      badge_icon: 'medal',
+      badge_color: 'slate',
+      description: 'Clientes recorrentes com compras acumuladas.',
+      benefits: '3% de desconto em compras futuras e atendimento prioritário.',
+      discount_percent: 3,
+    },
+    {
+      company_id: companyId,
+      name: 'Ouro',
+      criterion_type: 'total_spent',
+      min_value: 1500,
+      tier_order: 3,
+      badge_icon: 'award',
+      badge_color: 'yellow',
+      description: 'Clientes de alta fidelidade e compras frequentes.',
+      benefits: '5% de desconto e condições facilitadas de pagamento.',
+      discount_percent: 5,
+    },
+    {
+      company_id: companyId,
+      name: 'Diamante VIP',
+      criterion_type: 'total_spent',
+      min_value: 3000,
+      tier_order: 4,
+      badge_icon: 'crown',
+      badge_color: 'cyan',
+      description: 'Nível máximo de prestígio e parceria comercial.',
+      benefits: '10% de desconto, frete grátis e canal de atendimento VIP direto.',
+      discount_percent: 10,
+    },
+  ]
+
+  const created: LoyaltyTier[] = []
+  for (const tier of defaults) {
+    const rec = await pb.collection('loyalty_tiers').create<LoyaltyTier>(tier)
+    created.push(rec)
+  }
+  return created
+}
+
 export interface CustomerHistoryData {
   customer: Customer
   sales: Sale[]
   quotes: Quote[]
   receivables: Receivable[]
+  loyaltyTiers: LoyaltyTier[]
 }
 
 export async function getCustomerHistory(
   companyId: string,
   customerId: string,
 ): Promise<CustomerHistoryData> {
-  const [customer, sales, quotes, receivables] = await Promise.all([
+  const [customer, sales, quotes, receivables, loyaltyTiers] = await Promise.all([
     pb.collection('customers').getOne<Customer>(customerId),
     pb
       .collection('sales')
@@ -233,6 +323,13 @@ export async function getCustomerHistory(
         expand: 'client_id',
       })
       .catch(() => [] as Receivable[]),
+    pb
+      .collection('loyalty_tiers')
+      .getFullList<LoyaltyTier>({
+        filter: `company_id = "${companyId}"`,
+        sort: 'tier_order',
+      })
+      .catch(() => [] as LoyaltyTier[]),
   ])
 
   return {
@@ -240,6 +337,7 @@ export async function getCustomerHistory(
     sales,
     quotes,
     receivables,
+    loyaltyTiers,
   }
 }
 
@@ -460,6 +558,7 @@ export interface FullCompanyBackup {
   movements: Movement[]
   goals: Goal[]
   agenda_events: AgendaEvent[]
+  loyalty_tiers?: LoyaltyTier[]
 }
 
 export async function exportFullCompanyBackup(companyId: string): Promise<FullCompanyBackup> {
@@ -582,5 +681,6 @@ export async function exportFullCompanyBackup(companyId: string): Promise<FullCo
     movements,
     goals,
     agenda_events,
+    loyalty_tiers: await getLoyaltyTiers(companyId).catch(() => [] as LoyaltyTier[]),
   }
 }

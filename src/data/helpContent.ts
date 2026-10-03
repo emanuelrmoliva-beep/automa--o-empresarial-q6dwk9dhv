@@ -743,6 +743,64 @@ export const HELP_TOPICS: HelpTopic[] = [
     ],
   },
   {
+    id: 'fidelidade',
+    category: 'operacao',
+    categoryLabel: 'Operação Diária',
+    title: 'Programa de Fidelidade & Faixas',
+    shortDescription:
+      'Crie faixas e critérios personalizados para classificar clientes com medalhas e troféus automáticos conforme compram.',
+    iconName: 'Trophy',
+    route: '/fidelidade',
+    badge: 'Fidelização',
+    keywords: [
+      'fidelidade',
+      'programa de fidelidade',
+      'faixas',
+      'níveis',
+      'medalha',
+      'troféu',
+      'classificação',
+      'ouro',
+      'prata',
+      'bronze',
+      'diamante',
+      'critérios',
+      'desconto',
+      'avanço',
+      'pontos',
+    ],
+    highlights: [
+      'Critérios 100% configuráveis pelo empresário: Total gasto em compras, quantidade de compras concluídas, ticket médio ou recência.',
+      'Medalhas e troféus visuais automáticos com cores exclusivas (Bronze, Prata, Ouro, Diamante, Esmeralda, Rubi, Safira).',
+      'Recálculo em tempo real da faixa de cada cliente com base nas compras faturadas no sistema.',
+      'Selo com troféu na listagem de clientes, no formulário de cadastro e na página de Histórico 360° com barra de progresso.',
+      'Opção de definir benefícios e percentual de desconto sugerido por faixa.',
+    ],
+    steps: [
+      {
+        title: '1. Acessar o Módulo de Fidelidade',
+        description:
+          'No menu lateral, clique em "Programa de Fidelidade" (ou pelo botão no topo da tela de Clientes). Se ainda não tiver faixas, clique em "Carregar Faixas Padrão" para começar com Bronze, Prata, Ouro e Diamante.',
+      },
+      {
+        title: '2. Criar e Customizar Critérios e Faixas',
+        description:
+          'Clique em "+ Nova Faixa" ou no botão de lápis para editar. Defina o nome da faixa, escolha o critério (ex.: Total Gasto ou Número de Compras), determine o valor de corte e selecione o ícone (Troféu, Medalha, Coroa, etc.) e a cor da faixa.',
+        tip: 'Você pode ordenar as faixas pelas setas de subir/descer: a maior faixa exige mais e confere mais prestígio ao cliente.',
+      },
+      {
+        title: '3. Acompanhar a Classificação Automática dos Clientes',
+        description:
+          'O sistema avalia cada cliente automaticamente conforme as vendas são concluídas. Na listagem de Clientes e no Histórico do Cliente, você vê a medalha/troféu correspondente ao nível alcançado.',
+      },
+      {
+        title: '4. Visualizar Progresso para a Próxima Faixa',
+        description:
+          'Ao abrir o Histórico do Cliente, confira a barra de progresso que mostra exatamente quanto falta em compras para o cliente avançar para o próximo troféu.',
+      },
+    ],
+  },
+  {
     id: 'historico-cliente',
     category: 'operacao',
     categoryLabel: 'Operação Diária',

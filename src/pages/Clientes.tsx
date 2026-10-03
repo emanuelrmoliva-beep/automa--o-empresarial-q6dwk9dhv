@@ -19,8 +19,18 @@ import {
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
 import { useRealtime } from '@/hooks/use-realtime'
-import { getCustomers, createCustomer, updateCustomer, deleteCustomer } from '@/services/erp'
-import type { Customer } from '@/types/erp'
+import {
+  getCustomers,
+  createCustomer,
+  updateCustomer,
+  deleteCustomer,
+  getLoyaltyTiers,
+  getSales,
+} from '@/services/erp'
+import type { Customer, LoyaltyTier, Sale } from '@/types/erp'
+import { calculateCustomerMetrics, evaluateCustomerLoyalty } from '@/lib/loyalty'
+import { LoyaltyBadge } from '@/components/LoyaltyBadge'
+import { Trophy } from 'lucide-react'
 import {
   maskCpf,
   maskCnpj,
@@ -50,6 +60,8 @@ export const Clientes: React.FC = () => {
   const { toast } = useToast()
 
   const [customers, setCustomers] = useState<Customer[]>([])
+  const [loyaltyTiers, setLoyaltyTiers] = useState<LoyaltyTier[]>([])
+  const [sales, setSales] = useState<Sale[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
@@ -74,8 +86,14 @@ export const Clientes: React.FC = () => {
   const loadData = useCallback(async () => {
     if (!company) return
     try {
-      const data = await getCustomers(company.id)
-      setCustomers(data)
+      const [custData, tiersData, salesData] = await Promise.all([
+        getCustomers(company.id),
+        getLoyaltyTiers(company.id).catch(() => [] as LoyaltyTier[]),
+        getSales(company.id).catch(() => [] as Sale[]),
+      ])
+      setCustomers(custData)
+      setLoyaltyTiers(tiersData)
+      setSales(salesData)
     } catch (err) {
       console.error(err)
     } finally {
@@ -88,6 +106,26 @@ export const Clientes: React.FC = () => {
   }, [loadData])
 
   useRealtime('customers', () => loadData(), !!company)
+  useRealtime('loyalty_tiers', () => loadData(), !!company)
+  useRealtime('sales', () => loadData(), !!company)
+
+  // Mapa de vendas por cliente para avaliação instantânea
+  const customerLoyaltyMap = useMemo(() => {
+    const salesByCust: Record<string, Sale[]> = {}
+    sales.forEach((s) => {
+      if (!s.customer_id) return
+      if (!salesByCust[s.customer_id]) salesByCust[s.customer_id] = []
+      salesByCust[s.customer_id].push(s)
+    })
+
+    const map: Record<string, ReturnType<typeof evaluateCustomerLoyalty>> = {}
+    customers.forEach((c) => {
+      const cSales = salesByCust[c.id] || []
+      const metrics = calculateCustomerMetrics(cSales)
+      map[c.id] = evaluateCustomerLoyalty(metrics, loyaltyTiers)
+    })
+    return map
+  }, [customers, sales, loyaltyTiers])
 
   const openCreateModal = () => {
     setEditingCustomer(null)
@@ -230,12 +268,23 @@ export const Clientes: React.FC = () => {
           </p>
         </div>
 
-        <Button
-          onClick={openCreateModal}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold h-9 px-4 shadow-sm flex items-center gap-1.5"
-        >
-          <Plus className="w-4 h-4" /> Novo Cliente
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/fidelidade')}
+            className="text-xs h-9 border-amber-300 text-amber-900 bg-amber-50/60 hover:bg-amber-100 flex items-center gap-1.5"
+          >
+            <Trophy className="w-4 h-4 text-amber-600" />
+            Programa de Fidelidade
+          </Button>
+
+          <Button
+            onClick={openCreateModal}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold h-9 px-4 shadow-sm flex items-center gap-1.5"
+          >
+            <Plus className="w-4 h-4" /> Novo Cliente
+          </Button>
+        </div>
       </div>
 
       {/* Search Bar */}
@@ -317,6 +366,39 @@ export const Clientes: React.FC = () => {
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
+                </div>
+
+                {/* Selo de Fidelidade com Troféu/Medalha */}
+                <div className="mb-2.5">
+                  {customerLoyaltyMap[cust.id]?.currentTier ? (
+                    <div className="flex items-center justify-between">
+                      <LoyaltyBadge
+                        tier={customerLoyaltyMap[cust.id].currentTier}
+                        size="xs"
+                        interactive
+                        onClick={() => navigate(`/clientes/${cust.id}/historico`)}
+                      />
+                      {customerLoyaltyMap[cust.id]?.nextTier && (
+                        <span className="text-[10px] text-slate-400">
+                          {customerLoyaltyMap[cust.id].progressPercent}% para{' '}
+                          {customerLoyaltyMap[cust.id].nextTier?.name}
+                        </span>
+                      )}
+                    </div>
+                  ) : loyaltyTiers.length > 0 ? (
+                    <div className="flex items-center justify-between">
+                      <span className="inline-flex items-center gap-1 text-[10px] text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-200">
+                        <Trophy className="w-3 h-3 text-slate-400" />
+                        Iniciante
+                      </span>
+                      {customerLoyaltyMap[cust.id]?.nextTier && (
+                        <span className="text-[10px] text-slate-400">
+                          {customerLoyaltyMap[cust.id].progressPercent}% para{' '}
+                          {customerLoyaltyMap[cust.id].nextTier?.name}
+                        </span>
+                      )}
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="space-y-1.5 text-xs text-slate-600 border-t border-slate-100 pt-3">
@@ -403,10 +485,35 @@ export const Clientes: React.FC = () => {
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="w-[95vw] sm:max-w-[500px] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-slate-900">
-              {editingCustomer ? 'Editar Cliente' : 'Novo Cliente'}
-            </DialogTitle>
+            <div className="flex items-center justify-between pr-4">
+              <DialogTitle className="text-lg font-bold text-slate-900">
+                {editingCustomer ? 'Editar Cliente' : 'Novo Cliente'}
+              </DialogTitle>
+              {editingCustomer && customerLoyaltyMap[editingCustomer.id]?.currentTier && (
+                <LoyaltyBadge tier={customerLoyaltyMap[editingCustomer.id].currentTier} size="sm" />
+              )}
+            </div>
           </DialogHeader>
+
+          {editingCustomer && (
+            <div className="bg-gradient-to-r from-slate-50 to-emerald-50/50 p-3 rounded-xl border border-slate-200 text-xs flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Trophy className="w-4 h-4 text-amber-500" />
+                <span className="text-slate-700 font-medium">Classificação no Programa:</span>
+              </div>
+              <div className="text-right">
+                {customerLoyaltyMap[editingCustomer.id]?.currentTier ? (
+                  <span className="font-bold text-emerald-800">
+                    {customerLoyaltyMap[editingCustomer.id].currentTier?.name}
+                  </span>
+                ) : (
+                  <span className="text-slate-500 italic">
+                    Calculado automaticamente por vendas
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4 py-2">
             <div className="space-y-1.5">

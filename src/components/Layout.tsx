@@ -26,6 +26,7 @@ import {
   FileSpreadsheet,
   HelpCircle,
   Clock,
+  Award,
 } from 'lucide-react'
 import HelpModal from '@/components/HelpModal'
 import NotificationsDropdown from '@/components/NotificationsDropdown'
@@ -108,6 +109,7 @@ export const Layout: React.FC = () => {
         { path: '/vendas', label: 'Vendas', icon: ShoppingCart },
         { path: '/orcamentos', label: 'Orçamentos', icon: FileText },
         { path: '/clientes', label: 'Clientes', icon: Users },
+        { path: '/fidelidade', label: 'Programa de Fidelidade', icon: Award },
       ],
     },
     {
@@ -160,6 +162,7 @@ export const Layout: React.FC = () => {
     if (p.startsWith('/cotacoes')) return 'Cotações & Comparativo de Fornecedores'
     if (p.startsWith('/clientes/') && p.includes('/historico')) return 'Histórico do Cliente'
     if (p.startsWith('/clientes')) return 'Cadastro de Clientes'
+    if (p.startsWith('/fidelidade')) return 'Programa de Fidelidade & Faixas'
     if (p.startsWith('/estoque')) return 'Controle de Estoque & Catálogo'
     if (p.startsWith('/formacao-de-precos')) return 'Formação de Preços & Markup'
     if (p.startsWith('/receitas')) return 'Receitas'

@@ -296,3 +296,37 @@ export interface CashFlowProjectionDay {
   projectedBalance: number
   isNegative: boolean
 }
+
+export type LoyaltyCriterionType =
+  | 'total_spent' // Valor total em compras concluídas (R$)
+  | 'sales_count' // Quantidade total de compras concluídas
+  | 'average_ticket' // Ticket médio por compra concluída (R$)
+  | 'days_recent' // Recência: compras realizadas nos últimos X dias
+
+export type LoyaltyBadgeIcon = 'trophy' | 'medal' | 'award' | 'crown' | 'star' | 'shield' | 'gem'
+
+export type LoyaltyBadgeColor =
+  | 'amber' // ex: Bronze / Âmbar
+  | 'slate' // ex: Prata / Cinza Metálico
+  | 'yellow' // ex: Ouro / Dourado
+  | 'cyan' // ex: Diamante / Azul Turquesa
+  | 'emerald' // ex: Esmeralda / Platina Verde
+  | 'violet' // ex: Ametista / Roxo VIP
+  | 'rose' // ex: Rubi / Rosé
+  | 'blue' // ex: Safira / Azul Royal
+
+export interface LoyaltyTier {
+  id: string
+  company_id: string
+  name: string
+  criterion_type: LoyaltyCriterionType
+  min_value: number
+  tier_order: number
+  badge_icon: LoyaltyBadgeIcon
+  badge_color: LoyaltyBadgeColor
+  description?: string
+  benefits?: string
+  discount_percent?: number
+  created: string
+  updated: string
+}
