@@ -346,7 +346,7 @@ export const Estoque: React.FC = () => {
         </div>
       </div>
 
-      {/* Products Table */}
+      {/* Products List */}
       {filteredProducts.length === 0 ? (
         <EmptyState
           icon={<Package className="w-8 h-8" />}
@@ -356,115 +356,215 @@ export const Estoque: React.FC = () => {
           onAction={openCreateModal}
         />
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                  <th className="py-3 px-4">Produto & SKU</th>
-                  <th className="py-3 px-4">Categoria</th>
-                  <th className="py-3 px-4 text-right">Preço de Custo</th>
-                  <th className="py-3 px-4 text-right">Preço de Venda</th>
-                  <th className="py-3 px-4 text-center">Quantidade</th>
-                  <th className="py-3 px-4 text-center">Mínimo</th>
-                  <th className="py-3 px-4 text-center">Status</th>
-                  <th className="py-3 px-4 text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
-                {filteredProducts.map((p) => {
-                  const isLow = p.quantity <= (p.min_stock || 0) && p.quantity > 0
-                  const isOut = p.quantity === 0
+        <>
+          {/* Mobile Cards (telas pequenas) */}
+          <div className="md:hidden space-y-3">
+            {filteredProducts.map((p) => {
+              const isLow = p.quantity <= (p.min_stock || 0) && p.quantity > 0
+              const isOut = p.quantity === 0
 
-                  return (
-                    <tr
-                      key={p.id}
-                      className={`hover:bg-slate-50/70 transition ${
-                        isLow ? 'bg-amber-50/30' : isOut ? 'bg-red-50/30' : ''
-                      }`}
-                    >
-                      <td className="py-3 px-4 font-semibold text-slate-800">
-                        <div>{p.name}</div>
-                        <div className="text-[11px] font-mono text-slate-400 font-normal">
-                          {p.sku}
-                        </div>
-                      </td>
-
-                      <td className="py-3 px-4 text-slate-600">
-                        <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px]">
+              return (
+                <div
+                  key={p.id}
+                  className={`bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-3 ${
+                    isOut
+                      ? 'border-red-200 bg-red-50/15'
+                      : isLow
+                        ? 'border-amber-200 bg-amber-50/15'
+                        : ''
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-medium">
                           {p.category}
                         </span>
-                      </td>
-
-                      <td className="py-3 px-4 text-right font-mono text-slate-600 whitespace-nowrap">
-                        {formatCurrency(p.cost_price)}
-                      </td>
-
-                      <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 whitespace-nowrap">
-                        {formatCurrency(p.selling_price)}
-                      </td>
-
-                      <td className="py-3 px-4 text-center whitespace-nowrap">
-                        <button
-                          onClick={() => setAdjustTarget(p)}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded border border-slate-200 bg-white hover:border-emerald-500 hover:text-emerald-700 transition font-mono font-bold text-xs shadow-2xs"
-                          title="Clique para ajustar estoque"
-                        >
-                          <span>{p.quantity} un.</span>
-                          <span className="text-[10px] text-slate-400">±</span>
-                        </button>
-                      </td>
-
-                      <td className="py-3 px-4 text-center text-slate-500 font-mono">
-                        {p.min_stock || 0} un.
-                      </td>
-
-                      <td className="py-3 px-4 text-center whitespace-nowrap">
-                        {isOut ? (
-                          <span className="inline-flex items-center text-[10px] font-semibold text-red-700 bg-red-100 px-2 py-0.5 rounded-full">
-                            Esgotado
-                          </span>
-                        ) : isLow ? (
-                          <span className="inline-flex items-center text-[10px] font-semibold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">
-                            Baixo
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center text-[10px] font-semibold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
-                            OK
-                          </span>
+                        {p.sku && (
+                          <span className="text-[10px] font-mono text-slate-400">{p.sku}</span>
                         )}
-                      </td>
+                      </div>
+                      <h4 className="text-sm font-bold text-slate-900 mt-1">{p.name}</h4>
+                    </div>
 
-                      <td className="py-3 px-4 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => openEditModal(p)}
-                            className="p-1 rounded text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition"
-                            title="Editar produto"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => setDeleteTargetId(p.id)}
-                            className="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
-                            title="Excluir produto"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+                    <div>
+                      {isOut ? (
+                        <span className="inline-flex items-center text-[10px] font-semibold text-red-700 bg-red-100 px-2 py-0.5 rounded-full">
+                          Esgotado
+                        </span>
+                      ) : isLow ? (
+                        <span className="inline-flex items-center text-[10px] font-semibold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">
+                          Baixo
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center text-[10px] font-semibold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                          OK
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block uppercase">Custo</span>
+                      <span className="font-mono text-slate-600">
+                        {formatCurrency(p.cost_price)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 block uppercase">Venda</span>
+                      <span className="font-mono font-bold text-slate-900">
+                        {formatCurrency(p.selling_price)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <button
+                      onClick={() => setAdjustTarget(p)}
+                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:border-emerald-500 hover:text-emerald-700 active:bg-slate-50 transition text-xs font-semibold shadow-2xs"
+                    >
+                      <span>
+                        Estoque: <strong className="font-mono">{p.quantity}</strong> un.
+                      </span>
+                      <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">
+                        ± Ajustar
+                      </span>
+                    </button>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => openEditModal(p)}
+                        className="p-2 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200 transition"
+                        title="Editar produto"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setDeleteTargetId(p.id)}
+                        className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 active:bg-red-100 transition"
+                        title="Excluir produto"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
           </div>
-        </div>
+
+          {/* Desktop Table (md ou superior) */}
+          <div className="hidden md:block bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                    <th className="py-3 px-4">Produto & SKU</th>
+                    <th className="py-3 px-4">Categoria</th>
+                    <th className="py-3 px-4 text-right">Preço de Custo</th>
+                    <th className="py-3 px-4 text-right">Preço de Venda</th>
+                    <th className="py-3 px-4 text-center">Quantidade</th>
+                    <th className="py-3 px-4 text-center">Mínimo</th>
+                    <th className="py-3 px-4 text-center">Status</th>
+                    <th className="py-3 px-4 text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs">
+                  {filteredProducts.map((p) => {
+                    const isLow = p.quantity <= (p.min_stock || 0) && p.quantity > 0
+                    const isOut = p.quantity === 0
+
+                    return (
+                      <tr
+                        key={p.id}
+                        className={`hover:bg-slate-50/70 transition ${
+                          isLow ? 'bg-amber-50/30' : isOut ? 'bg-red-50/30' : ''
+                        }`}
+                      >
+                        <td className="py-3 px-4 font-semibold text-slate-800">
+                          <div>{p.name}</div>
+                          <div className="text-[11px] font-mono text-slate-400 font-normal">
+                            {p.sku}
+                          </div>
+                        </td>
+
+                        <td className="py-3 px-4 text-slate-600">
+                          <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px]">
+                            {p.category}
+                          </span>
+                        </td>
+
+                        <td className="py-3 px-4 text-right font-mono text-slate-600 whitespace-nowrap">
+                          {formatCurrency(p.cost_price)}
+                        </td>
+
+                        <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 whitespace-nowrap">
+                          {formatCurrency(p.selling_price)}
+                        </td>
+
+                        <td className="py-3 px-4 text-center whitespace-nowrap">
+                          <button
+                            onClick={() => setAdjustTarget(p)}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded border border-slate-200 bg-white hover:border-emerald-500 hover:text-emerald-700 transition font-mono font-bold text-xs shadow-2xs"
+                            title="Clique para ajustar estoque"
+                          >
+                            <span>{p.quantity} un.</span>
+                            <span className="text-[10px] text-slate-400">±</span>
+                          </button>
+                        </td>
+
+                        <td className="py-3 px-4 text-center text-slate-500 font-mono">
+                          {p.min_stock || 0} un.
+                        </td>
+
+                        <td className="py-3 px-4 text-center whitespace-nowrap">
+                          {isOut ? (
+                            <span className="inline-flex items-center text-[10px] font-semibold text-red-700 bg-red-100 px-2 py-0.5 rounded-full">
+                              Esgotado
+                            </span>
+                          ) : isLow ? (
+                            <span className="inline-flex items-center text-[10px] font-semibold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">
+                              Baixo
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center text-[10px] font-semibold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                              OK
+                            </span>
+                          )}
+                        </td>
+
+                        <td className="py-3 px-4 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={() => openEditModal(p)}
+                              className="p-1 rounded text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition"
+                              title="Editar produto"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => setDeleteTargetId(p.id)}
+                              className="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
+                              title="Excluir produto"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Modal Novo / Editar Produto */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[480px]">
+        <DialogContent className="w-[95vw] sm:max-w-[480px] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-slate-900">
               {editingProduct ? 'Editar Produto' : 'Novo Produto'}
@@ -608,7 +708,7 @@ export const Estoque: React.FC = () => {
 
       {/* Modal Ajuste Rápido de Estoque (+/-) */}
       <Dialog open={!!adjustTarget} onOpenChange={() => setAdjustTarget(null)}>
-        <DialogContent className="sm:max-w-[400px]">
+        <DialogContent className="w-[92vw] sm:max-w-[400px] p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-slate-900">
               Ajuste de Estoque: {adjustTarget?.name}
@@ -692,7 +792,7 @@ export const Estoque: React.FC = () => {
 
       {/* Confirmação de exclusão */}
       <Dialog open={!!deleteTargetId} onOpenChange={() => setDeleteTargetId(null)}>
-        <DialogContent className="sm:max-w-[400px]">
+        <DialogContent className="w-[92vw] sm:max-w-[400px] p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-slate-900">
               Excluir Produto?

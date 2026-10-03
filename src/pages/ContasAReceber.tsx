@@ -344,7 +344,7 @@ export const ContasAReceber: React.FC = () => {
         </Select>
       </div>
 
-      {/* Table */}
+      {/* List / Table */}
       {filteredReceivables.length === 0 ? (
         <EmptyState
           icon={<ReceiptText className="w-8 h-8" />}
@@ -354,102 +354,187 @@ export const ContasAReceber: React.FC = () => {
           onAction={openCreateModal}
         />
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                  <th className="py-3 px-4">Vencimento</th>
-                  <th className="py-3 px-4">Descrição</th>
-                  <th className="py-3 px-4">Cliente</th>
-                  <th className="py-3 px-4 text-right">Valor</th>
-                  <th className="py-3 px-4 text-center">Status</th>
-                  <th className="py-3 px-4 text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
-                {filteredReceivables.map((item) => {
-                  const isOverdue = item.due_date < todayStr && item.status === 'Em aberto'
+        <>
+          {/* Mobile Cards (telas pequenas) */}
+          <div className="md:hidden space-y-3">
+            {filteredReceivables.map((item) => {
+              const isOverdue = item.due_date < todayStr && item.status === 'Em aberto'
 
-                  return (
-                    <tr
-                      key={item.id}
-                      className={`hover:bg-slate-50/60 transition ${
-                        isOverdue ? 'bg-red-50/30' : ''
-                      }`}
-                    >
-                      <td className="py-3 px-4 font-medium text-slate-800 whitespace-nowrap">
-                        {formatDatePtBr(item.due_date)}
-                      </td>
-
-                      <td className="py-3 px-4 text-slate-800 font-semibold max-w-[200px] truncate">
+              return (
+                <div
+                  key={item.id}
+                  className={`bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-3 ${
+                    isOverdue ? 'border-red-200 bg-red-50/15' : ''
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <span className="text-[11px] font-medium text-slate-400">
+                        Vencimento: {formatDatePtBr(item.due_date)}
+                      </span>
+                      <h4 className="text-sm font-bold text-slate-900 leading-tight mt-0.5">
                         {item.description}
-                      </td>
+                      </h4>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Cliente: {item.expand?.client_id?.name || 'Cliente Avulso'}
+                      </p>
+                    </div>
 
-                      <td className="py-3 px-4 text-slate-600 max-w-[160px] truncate">
-                        {item.expand?.client_id?.name || 'Cliente Avulso'}
-                      </td>
+                    <div>
+                      {item.status === 'Recebida' ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                          <CheckCircle2 className="w-3 h-3" /> Recebida
+                        </span>
+                      ) : isOverdue ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-800">
+                          <AlertCircle className="w-3 h-3" /> Atrasada
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800">
+                          <Clock className="w-3 h-3" /> Em aberto
+                        </span>
+                      )}
+                    </div>
+                  </div>
 
-                      <td className="py-3 px-4 font-mono font-bold text-slate-900 text-right whitespace-nowrap">
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase">Valor a Receber</span>
+                      <p className="text-base font-bold font-mono text-slate-900">
                         {formatCurrency(item.amount)}
-                      </td>
+                      </p>
+                    </div>
 
-                      <td className="py-3 px-4 text-center whitespace-nowrap">
-                        {item.status === 'Recebida' ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
-                            <CheckCircle2 className="w-3 h-3" /> Recebida
-                          </span>
-                        ) : isOverdue ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-800">
-                            <AlertCircle className="w-3 h-3" /> Atrasada
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800">
-                            <Clock className="w-3 h-3" /> Em aberto
-                          </span>
-                        )}
-                      </td>
-
-                      <td className="py-3 px-4 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1">
-                          {item.status === 'Em aberto' && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setMarkReceivedTarget(item)}
-                              className="h-7 text-[11px] px-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 font-semibold"
-                            >
-                              <Check className="w-3 h-3 mr-1" /> Marcar Recebida
-                            </Button>
-                          )}
-                          <button
-                            onClick={() => openEditModal(item)}
-                            className="p-1 rounded text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition"
-                            title="Editar"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => setDeleteTargetId(item.id)}
-                            className="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
-                            title="Excluir"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+                    <div className="flex items-center gap-1">
+                      {item.status === 'Em aberto' && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setMarkReceivedTarget(item)}
+                          className="h-8 text-xs px-2.5 border-emerald-400 text-emerald-700 hover:bg-emerald-50 font-semibold"
+                        >
+                          <Check className="w-3.5 h-3.5 mr-1" /> Receber
+                        </Button>
+                      )}
+                      <button
+                        onClick={() => openEditModal(item)}
+                        className="p-2 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200 transition"
+                        title="Editar"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setDeleteTargetId(item.id)}
+                        className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 active:bg-red-100 transition"
+                        title="Excluir"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
           </div>
-        </div>
+
+          {/* Desktop Table (md ou superior) */}
+          <div className="hidden md:block bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                    <th className="py-3 px-4">Vencimento</th>
+                    <th className="py-3 px-4">Descrição</th>
+                    <th className="py-3 px-4">Cliente</th>
+                    <th className="py-3 px-4 text-right">Valor</th>
+                    <th className="py-3 px-4 text-center">Status</th>
+                    <th className="py-3 px-4 text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs">
+                  {filteredReceivables.map((item) => {
+                    const isOverdue = item.due_date < todayStr && item.status === 'Em aberto'
+
+                    return (
+                      <tr
+                        key={item.id}
+                        className={`hover:bg-slate-50/60 transition ${
+                          isOverdue ? 'bg-red-50/30' : ''
+                        }`}
+                      >
+                        <td className="py-3 px-4 font-medium text-slate-800 whitespace-nowrap">
+                          {formatDatePtBr(item.due_date)}
+                        </td>
+
+                        <td className="py-3 px-4 text-slate-800 font-semibold max-w-[200px] truncate">
+                          {item.description}
+                        </td>
+
+                        <td className="py-3 px-4 text-slate-600 max-w-[160px] truncate">
+                          {item.expand?.client_id?.name || 'Cliente Avulso'}
+                        </td>
+
+                        <td className="py-3 px-4 font-mono font-bold text-slate-900 text-right whitespace-nowrap">
+                          {formatCurrency(item.amount)}
+                        </td>
+
+                        <td className="py-3 px-4 text-center whitespace-nowrap">
+                          {item.status === 'Recebida' ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                              <CheckCircle2 className="w-3 h-3" /> Recebida
+                            </span>
+                          ) : isOverdue ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-800">
+                              <AlertCircle className="w-3 h-3" /> Atrasada
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800">
+                              <Clock className="w-3 h-3" /> Em aberto
+                            </span>
+                          )}
+                        </td>
+
+                        <td className="py-3 px-4 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1">
+                            {item.status === 'Em aberto' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setMarkReceivedTarget(item)}
+                                className="h-7 text-[11px] px-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 font-semibold"
+                              >
+                                <Check className="w-3 h-3 mr-1" /> Marcar Recebida
+                              </Button>
+                            )}
+                            <button
+                              onClick={() => openEditModal(item)}
+                              className="p-1 rounded text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition"
+                              title="Editar"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => setDeleteTargetId(item.id)}
+                              className="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
+                              title="Excluir"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Modal Criar / Editar */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[480px]">
+        <DialogContent className="w-[95vw] sm:max-w-[480px] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-slate-900">
               {editingReceivable ? 'Editar Conta a Receber' : 'Nova Conta a Receber'}
@@ -577,7 +662,7 @@ export const ContasAReceber: React.FC = () => {
 
       {/* Modal Confirmar Recebimento */}
       <Dialog open={!!markReceivedTarget} onOpenChange={() => setMarkReceivedTarget(null)}>
-        <DialogContent className="sm:max-w-[420px]">
+        <DialogContent className="w-[92vw] sm:max-w-[420px] p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-slate-900">
               Confirmar Recebimento
@@ -613,7 +698,7 @@ export const ContasAReceber: React.FC = () => {
 
       {/* Confirmação de exclusão */}
       <Dialog open={!!deleteTargetId} onOpenChange={() => setDeleteTargetId(null)}>
-        <DialogContent className="sm:max-w-[400px]">
+        <DialogContent className="w-[92vw] sm:max-w-[400px] p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-slate-900">
               Excluir Conta a Receber?

@@ -335,72 +335,131 @@ export const Vendas: React.FC = () => {
           onAction={() => setIsModalOpen(true)}
         />
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                  <th className="py-3 px-4">Data</th>
-                  <th className="py-3 px-4">Cliente</th>
-                  <th className="py-3 px-4">Descrição</th>
-                  <th className="py-3 px-4">Pagamento</th>
-                  <th className="py-3 px-4 text-right">Valor</th>
-                  <th className="py-3 px-4 text-center">Status</th>
-                  <th className="py-3 px-4 text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
-                {filteredSales.map((sale) => (
-                  <tr key={sale.id} className="hover:bg-slate-50/60 transition">
-                    <td className="py-3 px-4 font-medium text-slate-800 whitespace-nowrap">
+        <>
+          {/* Mobile Cards (telas pequenas) */}
+          <div className="md:hidden space-y-3">
+            {filteredSales.map((sale) => (
+              <div
+                key={sale.id}
+                className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-2.5"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <span className="text-[11px] font-medium text-slate-400">
                       {formatDatePtBr(sale.sale_date)}
-                    </td>
-                    <td className="py-3 px-4 text-slate-700 max-w-[160px] truncate">
+                    </span>
+                    <h4 className="text-sm font-bold text-slate-900 leading-tight mt-0.5">
                       {sale.expand?.customer_id?.name || 'Cliente Avulso'}
-                    </td>
-                    <td className="py-3 px-4 text-slate-600 max-w-[200px] truncate">
-                      {sale.description}
-                    </td>
-                    <td className="py-3 px-4 text-slate-500">{sale.payment_method || '-'}</td>
-                    <td className="py-3 px-4 font-bold font-mono text-slate-900 text-right whitespace-nowrap">
+                    </h4>
+                  </div>
+                  <span
+                    className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${
+                      sale.status === 'Concluída'
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : sale.status === 'Pendente'
+                          ? 'bg-amber-50 text-amber-700'
+                          : 'bg-red-50 text-red-700'
+                    }`}
+                  >
+                    {sale.status === 'Concluída' && <CheckCircle2 className="w-3 h-3" />}
+                    {sale.status === 'Pendente' && <Clock className="w-3 h-3" />}
+                    {sale.status === 'Cancelada' && <XCircle className="w-3 h-3" />}
+                    {sale.status}
+                  </span>
+                </div>
+
+                <p className="text-xs text-slate-600 line-clamp-2">{sale.description}</p>
+
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">
+                      {sale.payment_method || 'Pagamento não inf.'}
+                    </span>
+                    <p className="text-sm font-bold font-mono text-slate-900">
                       {formatCurrency(sale.amount)}
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <span
-                        className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${
-                          sale.status === 'Concluída'
-                            ? 'bg-emerald-50 text-emerald-700'
-                            : sale.status === 'Pendente'
-                              ? 'bg-amber-50 text-amber-700'
-                              : 'bg-red-50 text-red-700'
-                        }`}
-                      >
-                        {sale.status === 'Concluída' && <CheckCircle2 className="w-3 h-3" />}
-                        {sale.status === 'Pendente' && <Clock className="w-3 h-3" />}
-                        {sale.status === 'Cancelada' && <XCircle className="w-3 h-3" />}
-                        {sale.status}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <button
-                        onClick={() => setDeleteTargetId(sale.id)}
-                        className="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
-                        title="Excluir venda"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setDeleteTargetId(sale.id)}
+                    className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 active:bg-red-100 transition"
+                    title="Excluir venda"
+                    aria-label="Excluir venda"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
+
+          {/* Desktop Table (md ou superior) */}
+          <div className="hidden md:block bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                    <th className="py-3 px-4">Data</th>
+                    <th className="py-3 px-4">Cliente</th>
+                    <th className="py-3 px-4">Descrição</th>
+                    <th className="py-3 px-4">Pagamento</th>
+                    <th className="py-3 px-4 text-right">Valor</th>
+                    <th className="py-3 px-4 text-center">Status</th>
+                    <th className="py-3 px-4 text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs">
+                  {filteredSales.map((sale) => (
+                    <tr key={sale.id} className="hover:bg-slate-50/60 transition">
+                      <td className="py-3 px-4 font-medium text-slate-800 whitespace-nowrap">
+                        {formatDatePtBr(sale.sale_date)}
+                      </td>
+                      <td className="py-3 px-4 text-slate-700 max-w-[160px] truncate">
+                        {sale.expand?.customer_id?.name || 'Cliente Avulso'}
+                      </td>
+                      <td className="py-3 px-4 text-slate-600 max-w-[200px] truncate">
+                        {sale.description}
+                      </td>
+                      <td className="py-3 px-4 text-slate-500">{sale.payment_method || '-'}</td>
+                      <td className="py-3 px-4 font-bold font-mono text-slate-900 text-right whitespace-nowrap">
+                        {formatCurrency(sale.amount)}
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <span
+                          className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                            sale.status === 'Concluída'
+                              ? 'bg-emerald-50 text-emerald-700'
+                              : sale.status === 'Pendente'
+                                ? 'bg-amber-50 text-amber-700'
+                                : 'bg-red-50 text-red-700'
+                          }`}
+                        >
+                          {sale.status === 'Concluída' && <CheckCircle2 className="w-3 h-3" />}
+                          {sale.status === 'Pendente' && <Clock className="w-3 h-3" />}
+                          {sale.status === 'Cancelada' && <XCircle className="w-3 h-3" />}
+                          {sale.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <button
+                          onClick={() => setDeleteTargetId(sale.id)}
+                          className="p-1.5 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
+                          title="Excluir venda"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Modal Nova Venda */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[480px]">
+        <DialogContent className="w-[95vw] sm:max-w-[480px] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-slate-900">
               Registrar Nova Venda
@@ -536,7 +595,7 @@ export const Vendas: React.FC = () => {
 
       {/* Confirmação de exclusão */}
       <Dialog open={!!deleteTargetId} onOpenChange={() => setDeleteTargetId(null)}>
-        <DialogContent className="sm:max-w-[400px]">
+        <DialogContent className="w-[92vw] sm:max-w-[400px] p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-slate-900">Excluir Venda?</DialogTitle>
           </DialogHeader>

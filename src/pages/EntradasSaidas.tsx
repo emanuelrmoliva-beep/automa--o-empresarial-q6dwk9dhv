@@ -252,48 +252,48 @@ export const EntradasSaidas: React.FC = () => {
       </div>
 
       {/* Filters Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-wrap gap-3 items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
           <Button
             size="sm"
             variant={typeFilter === 'Todas' ? 'default' : 'outline'}
             onClick={() => setTypeFilter('Todas')}
-            className={`text-xs h-9 ${
+            className={`text-xs h-8 sm:h-9 shrink-0 ${
               typeFilter === 'Todas' ? 'bg-slate-900 text-white hover:bg-slate-800' : ''
             }`}
           >
-            Todas as Movimentações
+            Todas
           </Button>
 
           <Button
             size="sm"
             variant={typeFilter === 'entrada' ? 'default' : 'outline'}
             onClick={() => setTypeFilter('entrada')}
-            className={`text-xs h-9 ${
+            className={`text-xs h-8 sm:h-9 shrink-0 ${
               typeFilter === 'entrada'
                 ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
                 : 'text-emerald-700 hover:bg-emerald-50'
             }`}
           >
-            <ArrowDownLeft className="w-3.5 h-3.5 mr-1" /> Apenas Entradas
+            <ArrowDownLeft className="w-3.5 h-3.5 mr-1" /> Entradas
           </Button>
 
           <Button
             size="sm"
             variant={typeFilter === 'saída' ? 'default' : 'outline'}
             onClick={() => setTypeFilter('saída')}
-            className={`text-xs h-9 ${
+            className={`text-xs h-8 sm:h-9 shrink-0 ${
               typeFilter === 'saída'
                 ? 'bg-red-600 hover:bg-red-700 text-white'
                 : 'text-red-700 hover:bg-red-50'
             }`}
           >
-            <ArrowUpRight className="w-3.5 h-3.5 mr-1" /> Apenas Saídas
+            <ArrowUpRight className="w-3.5 h-3.5 mr-1" /> Saídas
           </Button>
         </div>
 
         <Select value={periodFilter} onValueChange={(val) => setPeriodFilter(val)}>
-          <SelectTrigger className="w-40 h-9 text-xs">
+          <SelectTrigger className="w-full sm:w-40 h-9 text-xs">
             <SelectValue placeholder="Período" />
           </SelectTrigger>
           <SelectContent>
@@ -322,7 +322,7 @@ export const EntradasSaidas: React.FC = () => {
               className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden"
             >
               {/* Header do Dia */}
-              <div className="bg-slate-50/90 px-5 py-3 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div className="bg-slate-50/90 px-4 sm:px-5 py-3 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-slate-500" />
                   <span className="text-xs font-bold text-slate-800">
@@ -330,15 +330,15 @@ export const EntradasSaidas: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="flex items-center gap-3 text-xs font-mono">
-                  <span className="text-emerald-700 font-semibold">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs font-mono">
+                  <span className="text-emerald-700 font-semibold text-[11px]">
                     +{formatCurrency(group.totalEntradas)}
                   </span>
-                  <span className="text-slate-300">•</span>
-                  <span className="text-red-700 font-semibold">
+                  <span className="text-slate-300 hidden sm:inline">•</span>
+                  <span className="text-red-700 font-semibold text-[11px]">
                     -{formatCurrency(group.totalSaidas)}
                   </span>
-                  <span className="text-slate-300">•</span>
+                  <span className="text-slate-300 hidden sm:inline">•</span>
                   <span
                     className={`font-bold px-2 py-0.5 rounded text-[11px] ${
                       group.saldoDia >= 0
@@ -356,30 +356,30 @@ export const EntradasSaidas: React.FC = () => {
                 {group.items.map((m) => (
                   <div
                     key={m.id}
-                    className="p-4 flex items-center justify-between gap-4 hover:bg-slate-50/50 transition"
+                    className="p-3 sm:p-4 flex items-center justify-between gap-2.5 sm:gap-4 hover:bg-slate-50/50 transition"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                       <div
-                        className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                        className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center shrink-0 ${
                           m.type === 'entrada'
                             ? 'bg-emerald-50 text-emerald-600'
                             : 'bg-red-50 text-red-600'
                         }`}
                       >
                         {m.type === 'entrada' ? (
-                          <ArrowDownLeft className="w-5 h-5" />
+                          <ArrowDownLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                         ) : (
-                          <ArrowUpRight className="w-5 h-5" />
+                          <ArrowUpRight className="w-4 h-4 sm:w-5 sm:h-5" />
                         )}
                       </div>
 
                       <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="text-xs sm:text-sm font-semibold text-slate-900 truncate">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="text-xs sm:text-sm font-semibold text-slate-900 truncate max-w-[170px] sm:max-w-none">
                             {m.description}
                           </p>
                           <span
-                            className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0 ${
+                            className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-1.5 sm:px-2 py-0.2 rounded-full shrink-0 ${
                               m.type === 'entrada'
                                 ? 'bg-emerald-50 text-emerald-700'
                                 : 'bg-red-50 text-red-700'
@@ -388,7 +388,7 @@ export const EntradasSaidas: React.FC = () => {
                             {m.type}
                           </span>
                         </div>
-                        <p className="text-[11px] text-slate-400 mt-0.5">
+                        <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 truncate">
                           {m.category || 'Geral'} {m.reference ? `• Ref: ${m.reference}` : ''}
                         </p>
                       </div>
@@ -396,7 +396,7 @@ export const EntradasSaidas: React.FC = () => {
 
                     <div className="text-right shrink-0">
                       <span
-                        className={`text-sm sm:text-base font-mono font-bold ${
+                        className={`text-xs sm:text-base font-mono font-bold whitespace-nowrap ${
                           m.type === 'entrada' ? 'text-emerald-600' : 'text-red-600'
                         }`}
                       >
@@ -413,7 +413,7 @@ export const EntradasSaidas: React.FC = () => {
 
       {/* Modal Lançamento Manual */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[480px]">
+        <DialogContent className="w-[95vw] sm:max-w-[480px] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-slate-900">
               Novo Lançamento Avulso (Livro Caixa)

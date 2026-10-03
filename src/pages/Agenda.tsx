@@ -708,7 +708,7 @@ export const Agenda: React.FC = () => {
 
       {/* Modal Criar / Editar Evento */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[480px]">
+        <DialogContent className="w-[95vw] sm:max-w-[480px] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
               <CalendarDays className="w-5 h-5 text-emerald-600" />
@@ -869,7 +869,7 @@ export const Agenda: React.FC = () => {
 
       {/* Confirmação Exclusão */}
       <Dialog open={!!deleteTargetId} onOpenChange={() => setDeleteTargetId(null)}>
-        <DialogContent className="sm:max-w-[400px]">
+        <DialogContent className="w-[92vw] sm:max-w-[400px] p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-slate-900">
               Excluir este Agendamento?

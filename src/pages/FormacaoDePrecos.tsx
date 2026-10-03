@@ -272,21 +272,21 @@ export const FormacaoDePrecos: React.FC = () => {
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button
                   onClick={handleReset}
                   variant="outline"
-                  className="bg-transparent border-slate-700 text-slate-300 hover:bg-slate-800 text-xs h-10"
+                  className="bg-transparent border-slate-700 text-slate-300 hover:bg-slate-800 text-xs h-9 sm:h-10 px-3"
                 >
-                  <RotateCcw className="w-4 h-4 mr-1.5" /> Limpar
+                  <RotateCcw className="w-3.5 h-3.5 mr-1.5" /> Limpar
                 </Button>
 
                 <Button
                   onClick={handleApplyToProduct}
                   disabled={!selectedProductId || applying}
-                  className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs h-10 px-5 shadow-sm active:scale-95 transition"
+                  className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs h-9 sm:h-10 px-4 shadow-sm active:scale-95 transition"
                 >
-                  <Sparkles className="w-4 h-4 mr-1.5 text-slate-950" />
+                  <Sparkles className="w-3.5 h-3.5 mr-1.5 text-slate-950" />
                   {applying ? 'Aplicando...' : 'Aplicar ao Produto'}
                 </Button>
               </div>

@@ -118,10 +118,14 @@ export const Layout: React.FC = () => {
       {/* Brand Header */}
       <div className="h-16 flex items-center px-4 border-b border-slate-800 justify-between">
         <div className="flex items-center space-x-3 overflow-hidden">
-          <div className="w-10 h-10 min-w-10 rounded-lg bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shadow-md">
-            <Building2 className="w-5 h-5" />
+          <div className="w-10 h-10 min-w-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shadow-md p-1">
+            <img
+              src="/app-icon.svg"
+              alt="Ícone Automação Empresarial"
+              className="w-8 h-8 rounded-lg"
+            />
           </div>
-          {!isCollapsed && (
+          {(!isCollapsed || mobileOpen) && (
             <div className="flex flex-col truncate">
               <span className="font-bold text-slate-100 text-sm tracking-tight truncate">
                 {company?.trade_name || 'Automação Empresarial'}
@@ -132,6 +136,15 @@ export const Layout: React.FC = () => {
             </div>
           )}
         </div>
+        {mobileOpen && (
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="lg:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+            aria-label="Fechar menu"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
       {/* Navigation items */}
@@ -240,10 +253,12 @@ export const Layout: React.FC = () => {
         {mobileOpen && (
           <div className="fixed inset-0 z-50 lg:hidden">
             <div
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
+              className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm transition-opacity"
               onClick={() => setMobileOpen(false)}
             />
-            <div className="fixed inset-y-0 left-0 w-[280px] z-50">{sidebarContent}</div>
+            <div className="fixed inset-y-0 left-0 w-[290px] max-w-[85vw] z-50 shadow-2xl animate-in slide-in-from-left duration-200">
+              {sidebarContent}
+            </div>
           </div>
         )}
 
@@ -254,17 +269,17 @@ export const Layout: React.FC = () => {
           }`}
         >
           {/* TopBar */}
-          <header className="h-16 bg-white border-b border-slate-200 sticky top-0 z-20 px-4 sm:px-6 flex items-center justify-between shadow-xs">
-            <div className="flex items-center gap-3">
+          <header className="h-16 bg-white border-b border-slate-200 sticky top-0 z-20 px-3 sm:px-6 flex items-center justify-between shadow-xs">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <button
                 onClick={() => setMobileOpen(true)}
-                className="lg:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100"
-                aria-label="Abrir menu"
+                className="lg:hidden p-2 rounded-lg text-slate-700 hover:bg-slate-100 active:bg-slate-200 transition"
+                aria-label="Abrir menu lateral"
               >
-                <Menu className="w-5 h-5" />
+                <Menu className="w-6 h-6" />
               </button>
-              <div>
-                <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+              <div className="min-w-0">
+                <h1 className="text-sm sm:text-lg font-bold text-slate-900 tracking-tight truncate">
                   {getPageTitle()}
                 </h1>
                 <p className="hidden sm:block text-xs text-slate-500 capitalize">{todayStr}</p>
@@ -329,14 +344,98 @@ export const Layout: React.FC = () => {
           </header>
 
           {/* Page Content with smooth transition */}
-          <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto animate-fade-in">
+          <main className="flex-1 p-3 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto animate-fade-in pb-20 lg:pb-8 overflow-x-hidden">
             <Outlet />
           </main>
 
           {/* Global Footer */}
-          <footer className="py-4 border-t border-slate-200 text-center text-xs text-slate-500 bg-white">
+          <footer className="hidden lg:block py-4 border-t border-slate-200 text-center text-xs text-slate-500 bg-white">
             Automação Empresarial © 2025 • Todos os direitos reservados
           </footer>
+
+          {/* Mobile Bottom Navigation Bar for quick thumb navigation */}
+          <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 flex items-center justify-around py-1.5 px-2 safe-area-pb shadow-lg">
+            <NavLink
+              to="/dashboard"
+              className={({ isActive }) =>
+                `flex flex-col items-center justify-center py-1 px-2.5 rounded-lg text-[10px] font-medium transition ${
+                  isActive ? 'text-emerald-600 font-bold' : 'text-slate-500 hover:text-slate-900'
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <LayoutDashboard
+                    className={`w-5 h-5 mb-0.5 ${isActive ? 'text-emerald-600 stroke-[2.5]' : ''}`}
+                  />
+                  <span>Início</span>
+                </>
+              )}
+            </NavLink>
+
+            <NavLink
+              to="/vendas"
+              className={({ isActive }) =>
+                `flex flex-col items-center justify-center py-1 px-2.5 rounded-lg text-[10px] font-medium transition ${
+                  isActive ? 'text-emerald-600 font-bold' : 'text-slate-500 hover:text-slate-900'
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <ShoppingCart
+                    className={`w-5 h-5 mb-0.5 ${isActive ? 'text-emerald-600 stroke-[2.5]' : ''}`}
+                  />
+                  <span>Vendas</span>
+                </>
+              )}
+            </NavLink>
+
+            <NavLink
+              to="/agenda"
+              className={({ isActive }) =>
+                `flex flex-col items-center justify-center py-1 px-2.5 rounded-lg text-[10px] font-medium transition ${
+                  isActive ? 'text-emerald-600 font-bold' : 'text-slate-500 hover:text-slate-900'
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <CalendarDays
+                    className={`w-5 h-5 mb-0.5 ${isActive ? 'text-emerald-600 stroke-[2.5]' : ''}`}
+                  />
+                  <span>Agenda</span>
+                </>
+              )}
+            </NavLink>
+
+            <NavLink
+              to="/receitas"
+              className={({ isActive }) =>
+                `flex flex-col items-center justify-center py-1 px-2.5 rounded-lg text-[10px] font-medium transition ${
+                  isActive ? 'text-emerald-600 font-bold' : 'text-slate-500 hover:text-slate-900'
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <ReceiptText
+                    className={`w-5 h-5 mb-0.5 ${isActive ? 'text-emerald-600 stroke-[2.5]' : ''}`}
+                  />
+                  <span>Financeiro</span>
+                </>
+              )}
+            </NavLink>
+
+            <button
+              onClick={() => setMobileOpen(true)}
+              className="flex flex-col items-center justify-center py-1 px-2.5 rounded-lg text-[10px] font-medium text-slate-500 hover:text-slate-900 transition"
+              aria-label="Abrir menu de módulos"
+            >
+              <Menu className="w-5 h-5 mb-0.5" />
+              <span>Mais</span>
+            </button>
+          </nav>
         </div>
       </div>
     </div>

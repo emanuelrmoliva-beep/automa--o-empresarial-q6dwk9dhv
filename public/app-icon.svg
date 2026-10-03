@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A" />
+      <stop offset="50%" stop-color="#091E24" />
+      <stop offset="100%" stop-color="#022c22" />
+    </linearGradient>
+    <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399" />
+      <stop offset="50%" stop-color="#10B981" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#10B981" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#10B981" stop-opacity="0" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000" flood-opacity="0.45" />
+    </filter>
+  </defs>
+
+  <!-- Background Base (Full for maskable icon safe zone) -->
+  <rect width="512" height="512" fill="url(#bgGrad)" />
+
+  <!-- Inner rounded card for icon badge effect inside safe zone -->
+  <rect x="36" y="36" width="440" height="440" rx="96" fill="#0B132B" stroke="#1E293B" stroke-width="4" filter="url(#shadow)" />
+  <rect x="40" y="40" width="432" height="432" rx="92" fill="none" stroke="#10B981" stroke-opacity="0.25" stroke-width="2" />
+
+  <!-- Ambient glow circle -->
+  <circle cx="256" cy="240" r="140" fill="url(#glowGrad)" />
+
+  <!-- Growth / Financial Chart bars in background -->
+  <g opacity="0.22">
+    <rect x="130" y="270" width="34" height="110" rx="6" fill="#10B981" />
+    <rect x="180" y="225" width="34" height="155" rx="6" fill="#10B981" />
+    <rect x="230" y="180" width="34" height="200" rx="6" fill="#10B981" />
+    <rect x="280" y="145" width="34" height="235" rx="6" fill="#10B981" />
+    <rect x="330" y="105" width="34" height="275" rx="6" fill="#10B981" />
+  </g>
+
+  <!-- Stylized Monogram / Arrow Symbol "AE" + Growth Arrow -->
+  <!-- Dynamic Growth Arrow Path -->
+  <path d="M 120 330 Q 210 320 280 230 T 385 140" fill="none" stroke="url(#emeraldGrad)" stroke-width="18" stroke-linecap="round" />
+  
+  <!-- Arrow Head -->
+  <path d="M 345 135 L 395 135 L 395 185" fill="none" stroke="url(#emeraldGrad)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" />
+
+  <!-- Stylized Geometric "A" and "E" Centerpiece -->
+  <!-- Letter A -->
+  <path d="M 175 360 L 225 210 L 255 210 L 305 360 L 270 360 L 258 322 L 222 322 L 210 360 Z M 230 288 L 250 288 L 240 248 Z" fill="#F8FAFC" />
+  
+  <!-- Overlapping Geometric "E" accent -->
+  <path d="M 285 240 L 350 240 L 350 266 L 312 266 L 312 287 L 344 287 L 344 313 L 312 313 L 312 334 L 352 334 L 352 360 L 285 360 Z" fill="url(#emeraldGrad)" />
+
+  <!-- Modern Accent Dot (Automation indicator) -->
+  <circle cx="395" cy="135" r="14" fill="#34D399" />
+  <circle cx="395" cy="135" r="7" fill="#FFFFFF" />
+
+  <!-- Subtle bottom caption badge -->
+  <rect x="180" y="396" width="152" height="24" rx="12" fill="#047857" fill-opacity="0.25" stroke="#10B981" stroke-opacity="0.4" stroke-width="1.5" />
+  <text x="256" y="412" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="700" fill="#34D399" letter-spacing="2.5">AUTOMAÇÃO</text>
+</svg>

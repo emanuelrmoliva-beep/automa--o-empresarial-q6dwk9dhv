@@ -315,20 +315,20 @@ export const Relatorios: React.FC = () => {
         <div className="p-4 bg-slate-50/70 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div className="flex items-center gap-2">
             <span className={`w-2.5 h-2.5 rounded-full ${badgeColor}`} />
-            <h4 className="font-bold text-sm text-slate-800 tracking-tight">
+            <h4 className="font-bold text-xs sm:text-sm text-slate-800 tracking-tight">
               {title} ({group.stats.total})
             </h4>
           </div>
 
-          <div className="flex items-center gap-3 text-xs font-mono">
-            <span className="text-red-700 bg-red-50 px-2 py-0.5 rounded border border-red-200">
+          <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
+            <span className="text-red-700 bg-red-50 px-2 py-0.5 rounded border border-red-200 text-[11px]">
               A Pagar: {formatCurrency(group.stats.pagar)}
             </span>
-            <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+            <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-[11px]">
               A Receber: {formatCurrency(group.stats.receber)}
             </span>
             <span
-              className={`font-bold px-2 py-0.5 rounded ${
+              className={`font-bold px-2 py-0.5 rounded text-[11px] ${
                 group.stats.saldo >= 0
                   ? 'bg-emerald-100 text-emerald-800'
                   : 'bg-red-100 text-red-800'
@@ -339,7 +339,46 @@ export const Relatorios: React.FC = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Mobile items view */}
+        <div className="md:hidden divide-y divide-slate-100 p-2 space-y-2">
+          {group.items.map((item) => (
+            <div
+              key={`${item.tipo}-${item.id}`}
+              className="p-2 space-y-1 bg-slate-50/40 rounded-lg"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <span
+                    className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
+                      item.tipo === 'A Pagar'
+                        ? 'bg-red-50 text-red-700 border border-red-200'
+                        : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    }`}
+                  >
+                    {item.tipo}
+                  </span>
+                  <p className="font-semibold text-xs text-slate-900 mt-1">{item.descricao}</p>
+                  <p className="text-[11px] text-slate-500">{item.contraparte}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <span
+                    className={`font-mono font-bold text-xs ${
+                      item.tipo === 'A Pagar' ? 'text-red-700' : 'text-emerald-700'
+                    }`}
+                  >
+                    {item.tipo === 'A Pagar' ? '-' : '+'} {formatCurrency(item.valor)}
+                  </span>
+                  <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                    {formatDatePtBr(item.vencimento)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-slate-100 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">

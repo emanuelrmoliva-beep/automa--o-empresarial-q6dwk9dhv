@@ -358,33 +358,37 @@ export const Dashboard: React.FC = () => {
       />
 
       {/* Top Welcome + Company Banner */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-xs">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+          <h2 className="text-lg sm:text-2xl font-bold tracking-tight text-slate-900">
             Olá, {user?.name || 'Gestor'}! 👋
           </h2>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
             Aqui está o controle completo e a visão 360° da sua empresa.
           </p>
         </div>
 
         {company && (
-          <div className="flex items-center gap-3 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-200/80">
-            <div className="w-10 h-10 rounded-lg bg-emerald-600/10 text-emerald-700 flex items-center justify-center">
-              <Building2 className="w-5 h-5" />
-            </div>
-            <div className="text-xs leading-tight">
-              <p className="font-bold text-slate-900">{company.trade_name}</p>
-              <p className="text-slate-500 font-mono text-[11px]">{company.cnpj}</p>
-              <p className="text-emerald-700 font-medium text-[11px] mt-0.5">
-                {company.business_activity} • {company.city}/{company.state}
-              </p>
+          <div className="flex items-center justify-between gap-3 bg-slate-50 p-3 sm:px-4 sm:py-2.5 rounded-xl border border-slate-200/80">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-emerald-600/10 text-emerald-700 flex items-center justify-center shrink-0">
+                <Building2 className="w-5 h-5" />
+              </div>
+              <div className="text-xs leading-tight min-w-0">
+                <p className="font-bold text-slate-900 truncate">{company.trade_name}</p>
+                <p className="text-slate-500 font-mono text-[10px] sm:text-[11px] truncate">
+                  {company.cnpj}
+                </p>
+                <p className="text-emerald-700 font-medium text-[10px] sm:text-[11px] mt-0.5 truncate">
+                  {company.city}/{company.state}
+                </p>
+              </div>
             </div>
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={() => navigate('/configuracoes')}
-              className="text-xs text-slate-500 hover:text-slate-800 ml-1 h-8 px-2"
+              className="text-xs text-slate-600 hover:text-slate-900 shrink-0 h-8 px-2.5"
             >
               Editar
             </Button>
@@ -393,7 +397,7 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Quick Actions Strip */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
         <Button
           onClick={() => navigate('/vendas')}
           className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold h-9 px-3.5 shadow-xs flex items-center gap-1.5 shrink-0"
@@ -587,10 +591,10 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Seção Gráfica 1: Vendas por Mês (Barras) & Evolução de Saldo / Caixa (Linha) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Vendas & Receitas por Mês (Barras) */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <h3 className="font-bold text-slate-800 text-sm tracking-tight">
                 Vendas & Receitas por Mês
@@ -609,17 +613,17 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="h-64 w-full">
+          <div className="h-56 sm:h-64 w-full min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={salesAndRevenueLast6Months}
-                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                <XAxis dataKey="month" stroke="#94A3B8" fontSize={11} tickLine={false} />
+                <XAxis dataKey="month" stroke="#94A3B8" fontSize={10} tickLine={false} />
                 <YAxis
                   stroke="#94A3B8"
-                  fontSize={11}
+                  fontSize={10}
                   tickLine={false}
                   tickFormatter={(val) => `R$${val >= 1000 ? (val / 1000).toFixed(0) + 'k' : val}`}
                 />
@@ -633,15 +637,15 @@ export const Dashboard: React.FC = () => {
                     fontSize: '12px',
                   }}
                 />
-                <Bar dataKey="receitas" fill="#10B981" radius={[4, 4, 0, 0]} barSize={18} />
-                <Bar dataKey="vendas" fill="#3B82F6" radius={[4, 4, 0, 0]} barSize={18} />
+                <Bar dataKey="receitas" fill="#10B981" radius={[4, 4, 0, 0]} barSize={14} />
+                <Bar dataKey="vendas" fill="#3B82F6" radius={[4, 4, 0, 0]} barSize={14} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         {/* Evolução de Saldo / Caixa (Linha com gradiente) */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-slate-800 text-sm tracking-tight">
@@ -654,17 +658,17 @@ export const Dashboard: React.FC = () => {
             </span>
           </div>
 
-          <div className="h-64 w-full">
+          <div className="h-56 sm:h-64 w-full min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
                 data={salesAndRevenueLast6Months}
-                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                <XAxis dataKey="month" stroke="#94A3B8" fontSize={11} tickLine={false} />
+                <XAxis dataKey="month" stroke="#94A3B8" fontSize={10} tickLine={false} />
                 <YAxis
                   stroke="#94A3B8"
-                  fontSize={11}
+                  fontSize={10}
                   tickLine={false}
                   tickFormatter={(val) => `R$${val >= 1000 ? (val / 1000).toFixed(0) + 'k' : val}`}
                 />
@@ -683,7 +687,7 @@ export const Dashboard: React.FC = () => {
                   dataKey="saldo"
                   stroke="#059669"
                   strokeWidth={3}
-                  dot={{ r: 4, fill: '#059669' }}
+                  dot={{ r: 3, fill: '#059669' }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -692,10 +696,10 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Seção Gráfica 2: Pizzas (Despesas por Categoria & Receitas vs Despesas) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Pizza: Despesas por Categoria */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
             <div>
               <h3 className="font-bold text-slate-800 text-sm tracking-tight flex items-center gap-2">
                 <PieChartIcon className="w-4 h-4 text-emerald-600" />
@@ -709,19 +713,19 @@ export const Dashboard: React.FC = () => {
           </div>
 
           {expensesByCategoryData.length === 0 ? (
-            <div className="py-16 text-center text-xs text-slate-400">
+            <div className="py-12 sm:py-16 text-center text-xs text-slate-400">
               Nenhuma despesa registrada para composição do gráfico.
             </div>
           ) : (
-            <div className="h-64 w-full flex items-center justify-center">
+            <div className="h-60 sm:h-64 w-full min-w-0 flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={expensesByCategoryData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={50}
-                    outerRadius={85}
+                    innerRadius={45}
+                    outerRadius={75}
                     paddingAngle={3}
                     dataKey="value"
                   >
@@ -742,7 +746,7 @@ export const Dashboard: React.FC = () => {
                   <Legend
                     verticalAlign="bottom"
                     iconSize={8}
-                    wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
+                    wrapperStyle={{ fontSize: '10px', paddingTop: '6px' }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -751,8 +755,8 @@ export const Dashboard: React.FC = () => {
         </div>
 
         {/* Donut: Receitas vs Despesas vs Saldo */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
             <div>
               <h3 className="font-bold text-slate-800 text-sm tracking-tight">
                 Receitas vs Despesas (Proporção)
@@ -760,7 +764,7 @@ export const Dashboard: React.FC = () => {
               <p className="text-xs text-slate-400">Visão consolidada do mês corrente</p>
             </div>
             <span
-              className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+              className={`text-xs font-bold px-2 py-0.5 rounded-full w-fit ${
                 saldoDisponivel >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
               }`}
             >
@@ -769,19 +773,19 @@ export const Dashboard: React.FC = () => {
           </div>
 
           {totalReceitasMes === 0 && totalDespesasMes === 0 ? (
-            <div className="py-16 text-center text-xs text-slate-400">
+            <div className="py-12 sm:py-16 text-center text-xs text-slate-400">
               Sem dados financeiros suficientes no mês corrente.
             </div>
           ) : (
-            <div className="h-64 w-full flex items-center justify-center">
+            <div className="h-60 sm:h-64 w-full min-w-0 flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={receitasVsDespesasDonut}
                     cx="50%"
                     cy="50%"
-                    innerRadius={55}
-                    outerRadius={85}
+                    innerRadius={48}
+                    outerRadius={75}
                     paddingAngle={4}
                     dataKey="value"
                   >
@@ -802,7 +806,7 @@ export const Dashboard: React.FC = () => {
                   <Legend
                     verticalAlign="bottom"
                     iconSize={8}
-                    wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
+                    wrapperStyle={{ fontSize: '10px', paddingTop: '6px' }}
                   />
                 </PieChart>
               </ResponsiveContainer>

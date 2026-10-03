@@ -294,7 +294,7 @@ export const Despesas: React.FC = () => {
         </Select>
       </div>
 
-      {/* Table */}
+      {/* List / Table */}
       {filteredExpenses.length === 0 ? (
         <EmptyState
           icon={<ArrowUpRight className="w-8 h-8 text-red-500" />}
@@ -304,83 +304,151 @@ export const Despesas: React.FC = () => {
           onAction={openCreateModal}
         />
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                  <th className="py-3 px-4">Data</th>
-                  <th className="py-3 px-4">Descrição</th>
-                  <th className="py-3 px-4">Categoria</th>
-                  <th className="py-3 px-4">Pagamento</th>
-                  <th className="py-3 px-4 text-right">Valor</th>
-                  <th className="py-3 px-4 text-center">Status</th>
-                  <th className="py-3 px-4 text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
-                {filteredExpenses.map((exp) => (
-                  <tr key={exp.id} className="hover:bg-slate-50/60 transition">
-                    <td className="py-3 px-4 font-medium text-slate-800 whitespace-nowrap">
+        <>
+          {/* Mobile Cards (telas pequenas) */}
+          <div className="md:hidden space-y-3">
+            {filteredExpenses.map((exp) => (
+              <div
+                key={exp.id}
+                className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-2.5"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <span className="text-[11px] font-medium text-slate-400">
                       {formatDatePtBr(exp.expense_date)}
-                    </td>
-                    <td className="py-3 px-4 text-slate-800 font-semibold max-w-[220px] truncate">
+                    </span>
+                    <h4 className="text-sm font-bold text-slate-900 leading-tight mt-0.5">
                       {exp.description}
-                    </td>
-                    <td className="py-3 px-4 text-slate-600">
-                      <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px]">
-                        {exp.category}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-slate-500">{exp.payment_method || '-'}</td>
-                    <td className="py-3 px-4 font-mono font-bold text-red-700 text-right whitespace-nowrap">
-                      -{formatCurrency(exp.amount)}
-                    </td>
-                    <td className="py-3 px-4 text-center whitespace-nowrap">
-                      <span
-                        className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${
-                          exp.status === 'Paga'
-                            ? 'bg-emerald-50 text-emerald-700'
-                            : 'bg-amber-50 text-amber-700'
-                        }`}
-                      >
-                        {exp.status === 'Paga' ? (
-                          <CheckCircle2 className="w-3 h-3" />
-                        ) : (
-                          <Clock className="w-3 h-3" />
-                        )}
-                        {exp.status}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => openEditModal(exp)}
-                          className="p-1 rounded text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition"
-                          title="Editar"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => setDeleteTargetId(exp.id)}
-                          className="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
-                          title="Excluir"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </h4>
+                  </div>
+                  <span
+                    className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${
+                      exp.status === 'Paga'
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : 'bg-amber-50 text-amber-700'
+                    }`}
+                  >
+                    {exp.status === 'Paga' ? (
+                      <CheckCircle2 className="w-3 h-3" />
+                    ) : (
+                      <Clock className="w-3 h-3" />
+                    )}
+                    {exp.status}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-medium">
+                    {exp.category}
+                  </span>
+                  <span>•</span>
+                  <span>{exp.payment_method || 'À vista'}</span>
+                </div>
+
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                  <p className="text-base font-bold font-mono text-red-600">
+                    -{formatCurrency(exp.amount)}
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => openEditModal(exp)}
+                      className="p-2 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200 transition"
+                      title="Editar"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setDeleteTargetId(exp.id)}
+                      className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 active:bg-red-100 transition"
+                      title="Excluir"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
+
+          {/* Desktop Table (md ou superior) */}
+          <div className="hidden md:block bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                    <th className="py-3 px-4">Data</th>
+                    <th className="py-3 px-4">Descrição</th>
+                    <th className="py-3 px-4">Categoria</th>
+                    <th className="py-3 px-4">Pagamento</th>
+                    <th className="py-3 px-4 text-right">Valor</th>
+                    <th className="py-3 px-4 text-center">Status</th>
+                    <th className="py-3 px-4 text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs">
+                  {filteredExpenses.map((exp) => (
+                    <tr key={exp.id} className="hover:bg-slate-50/60 transition">
+                      <td className="py-3 px-4 font-medium text-slate-800 whitespace-nowrap">
+                        {formatDatePtBr(exp.expense_date)}
+                      </td>
+                      <td className="py-3 px-4 text-slate-800 font-semibold max-w-[220px] truncate">
+                        {exp.description}
+                      </td>
+                      <td className="py-3 px-4 text-slate-600">
+                        <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px]">
+                          {exp.category}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-slate-500">{exp.payment_method || '-'}</td>
+                      <td className="py-3 px-4 font-mono font-bold text-red-700 text-right whitespace-nowrap">
+                        -{formatCurrency(exp.amount)}
+                      </td>
+                      <td className="py-3 px-4 text-center whitespace-nowrap">
+                        <span
+                          className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                            exp.status === 'Paga'
+                              ? 'bg-emerald-50 text-emerald-700'
+                              : 'bg-amber-50 text-amber-700'
+                          }`}
+                        >
+                          {exp.status === 'Paga' ? (
+                            <CheckCircle2 className="w-3 h-3" />
+                          ) : (
+                            <Clock className="w-3 h-3" />
+                          )}
+                          {exp.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => openEditModal(exp)}
+                            className="p-1 rounded text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition"
+                            title="Editar"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setDeleteTargetId(exp.id)}
+                            className="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
+                            title="Excluir"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Modal Criar / Editar */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[480px]">
+        <DialogContent className="w-[95vw] sm:max-w-[480px] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-slate-900">
               {editingExpense ? 'Editar Despesa' : 'Nova Despesa'}
@@ -514,7 +582,7 @@ export const Despesas: React.FC = () => {
 
       {/* Confirmação Exclusão */}
       <Dialog open={!!deleteTargetId} onOpenChange={() => setDeleteTargetId(null)}>
-        <DialogContent className="sm:max-w-[400px]">
+        <DialogContent className="w-[92vw] sm:max-w-[400px] p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-slate-900">
               Excluir Despesa?
