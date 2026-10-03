@@ -14,11 +14,17 @@ import {
   Receipt,
   CreditCard,
   Building2,
+  FileText,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
 import { useRealtime } from '@/hooks/use-realtime'
 import { getPayables, getReceivables, getEntries, getExpenses, getSales } from '@/services/erp'
+import {
+  generateMonthlyReportPdf,
+  generateVencimentosReportPdf,
+  type VencimentoGroupData,
+} from '@/services/pdfReports'
 import type { Payable, Receivable, Entry, Expense, Sale } from '@/types/erp'
 import { formatCurrency, formatDatePtBr } from '@/lib/formatters'
 import { Button } from '@/components/ui/button'
@@ -260,7 +266,7 @@ export const Relatorios: React.FC = () => {
     })
   }
 
-  // Exportar Vencimentos Futuros
+  // Exportar Vencimentos Futuros (CSV e PDF)
   const handleExportVencimentos = () => {
     const headers = ['Tipo', 'Descrição', 'Fornecedor/Cliente', 'Vencimento', 'Valor (R$)']
     const rows = vencimentosAgrupados.todos.map((t) => [
@@ -273,7 +279,47 @@ export const Relatorios: React.FC = () => {
     downloadCsv(`relatorio_vencimentos_${new Date().toISOString().split('T')[0]}`, headers, rows)
   }
 
-  // Exportar Resumo Mensal
+  const handleExportVencimentosPdf = () => {
+    try {
+      const groups: VencimentoGroupData[] = [
+        { title: 'Títulos Vencidos (Atrasados)', ...vencimentosAgrupados.vencidas },
+        { title: 'Vencendo Hoje', ...vencimentosAgrupados.hoje },
+        { title: 'Esta Semana (Próximos 7 Dias)', ...vencimentosAgrupados.estaSemana },
+        { title: 'Próximos 15 Dias', ...vencimentosAgrupados.proximos15Dias },
+        { title: 'Próximos 30 Dias', ...vencimentosAgrupados.proximos30Dias },
+        { title: 'Próximos 60 Dias', ...vencimentosAgrupados.proximos60Dias },
+        { title: 'Longo Prazo (> 60 Dias)', ...vencimentosAgrupados.maisDe60Dias },
+      ]
+
+      const totalGeralPagar = vencimentosAgrupados.todos
+        .filter((t) => t.tipo === 'A Pagar')
+        .reduce((sum, t) => sum + t.valor, 0)
+      const totalGeralReceber = vencimentosAgrupados.todos
+        .filter((t) => t.tipo === 'A Receber')
+        .reduce((sum, t) => sum + t.valor, 0)
+
+      generateVencimentosReportPdf({
+        company,
+        groups,
+        totalGeralPagar,
+        totalGeralReceber,
+      })
+
+      toast({
+        title: 'PDF de Vencimentos gerado!',
+        description: 'O arquivo PDF foi baixado com sucesso.',
+      })
+    } catch (err) {
+      console.error('Erro ao gerar PDF de vencimentos:', err)
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao gerar PDF',
+        description: 'Não foi possível gerar o arquivo PDF.',
+      })
+    }
+  }
+
+  // Exportar Resumo Mensal (CSV e PDF)
   const handleExportResumoMensal = () => {
     const mesFormatado = `${selectedYear}_${String(selectedMonth + 1).padStart(2, '0')}`
     const headers = ['Tipo', 'Data', 'Descrição', 'Categoria/Origem', 'Status', 'Valor (R$)']
@@ -298,6 +344,77 @@ export const Relatorios: React.FC = () => {
     ]
 
     downloadCsv(`resumo_mensal_${mesFormatado}`, headers, rows)
+  }
+
+  const handleExportResumoMensalPdf = () => {
+    try {
+      // Contas pendentes do mês selecionado
+      const monthPendingPayables = payables.filter((p) => {
+        if (p.status !== 'Em aberto') return false
+        const d = new Date(p.due_date)
+        return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear
+      })
+
+      const monthPendingReceivables = receivables.filter((r) => {
+        if (r.status !== 'Em aberto') return false
+        const d = new Date(r.due_date)
+        return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear
+      })
+
+      generateMonthlyReportPdf({
+        company,
+        year: selectedYear,
+        monthName: MONTH_NAMES[selectedMonth],
+        totalReceitas: monthlySummary.totalReceitas,
+        totalReceitasRecebidas: monthlySummary.totalReceitasRecebidas,
+        totalReceitasPendentes: monthlySummary.totalReceitasPendentes,
+        totalDespesas: monthlySummary.totalDespesas,
+        totalDespesasPagas: monthlySummary.totalDespesasPagas,
+        totalDespesasPendentes: monthlySummary.totalDespesasPendentes,
+        totalVendas: monthlySummary.totalVendas,
+        resultadoOperacional: monthlySummary.resultadoOperacional,
+        margemOperacional: monthlySummary.margemOperacional,
+        expensesByCategory: monthlySummary.expensesByCategory,
+        entries: monthlySummary.mEntries.map((e) => ({
+          entry_date: e.entry_date,
+          description: e.description,
+          category: e.category,
+          status: e.status,
+          amount: Number(e.amount) || 0,
+        })),
+        expenses: monthlySummary.mExpenses.map((ex) => ({
+          expense_date: ex.expense_date,
+          description: ex.description,
+          category: ex.category,
+          status: ex.status,
+          amount: Number(ex.amount) || 0,
+        })),
+        pendingPayables: monthPendingPayables.map((p) => ({
+          due_date: p.due_date,
+          description: p.description,
+          supplier: p.supplier,
+          amount: Number(p.amount) || 0,
+        })),
+        pendingReceivables: monthPendingReceivables.map((r) => ({
+          due_date: r.due_date,
+          description: r.description,
+          clientName: (r.expand?.client_id as any)?.name,
+          amount: Number(r.amount) || 0,
+        })),
+      })
+
+      toast({
+        title: 'PDF do Resumo Mensal gerado!',
+        description: 'O arquivo PDF com o relatório completo foi baixado.',
+      })
+    } catch (err) {
+      console.error('Erro ao gerar PDF do resumo mensal:', err)
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao gerar PDF',
+        description: 'Não foi possível gerar o arquivo PDF.',
+      })
+    }
   }
 
   const renderVencimentoGroup = (
@@ -486,12 +603,21 @@ export const Relatorios: React.FC = () => {
               </p>
             </div>
 
-            <Button
-              onClick={handleExportVencimentos}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold h-9 px-4 shadow-xs flex items-center gap-1.5 self-start sm:self-auto"
-            >
-              <Download className="w-4 h-4" /> Exportar CSV
-            </Button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                variant="outline"
+                onClick={handleExportVencimentos}
+                className="border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-semibold h-9 px-3 shadow-xs flex items-center gap-1.5"
+              >
+                <Download className="w-3.5 h-3.5" /> CSV
+              </Button>
+              <Button
+                onClick={handleExportVencimentosPdf}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold h-9 px-3.5 shadow-xs flex items-center gap-1.5"
+              >
+                <FileText className="w-3.5 h-3.5" /> Exportar PDF
+              </Button>
+            </div>
           </div>
 
           {vencimentosAgrupados.todos.length === 0 ? (
@@ -573,12 +699,21 @@ export const Relatorios: React.FC = () => {
               </Select>
             </div>
 
-            <Button
-              onClick={handleExportResumoMensal}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold h-9 px-4 shadow-xs flex items-center gap-1.5 self-start sm:self-auto"
-            >
-              <Download className="w-4 h-4" /> Exportar Movimentos do Mês (CSV)
-            </Button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                variant="outline"
+                onClick={handleExportResumoMensal}
+                className="border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-semibold h-9 px-3 shadow-xs flex items-center gap-1.5"
+              >
+                <Download className="w-3.5 h-3.5" /> CSV
+              </Button>
+              <Button
+                onClick={handleExportResumoMensalPdf}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold h-9 px-3.5 shadow-xs flex items-center gap-1.5"
+              >
+                <FileText className="w-3.5 h-3.5" /> Exportar PDF
+              </Button>
+            </div>
           </div>
 
           {/* Cards DRE Gerencial */}

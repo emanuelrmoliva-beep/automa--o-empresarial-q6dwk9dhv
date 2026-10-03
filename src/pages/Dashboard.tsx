@@ -249,33 +249,41 @@ export const Dashboard: React.FC = () => {
     return months
   }, [entries, expenses, sales])
 
-  // Próximos Vencimentos
+  // Próximos Vencimentos (Priorizando os mais urgentes: atrasados e próximos)
   const proximosVencimentos = useMemo(() => {
     const todayStr = new Date().toISOString().split('T')[0]
 
     const mappedPayables = payables
       .filter((p) => p.status === 'Em aberto')
-      .map((p) => ({
-        id: p.id,
-        kind: 'pagar',
-        description: p.description,
-        party: p.supplier || 'Fornecedor',
-        amount: p.amount,
-        dueDate: p.due_date,
-        isOverdue: p.due_date < todayStr,
-      }))
+      .map((p) => {
+        const d = p.due_date.split('T')[0]
+        return {
+          id: p.id,
+          kind: 'pagar' as const,
+          description: p.description,
+          party: p.supplier || 'Fornecedor',
+          amount: Number(p.amount) || 0,
+          dueDate: d,
+          isOverdue: d < todayStr,
+          isToday: d === todayStr,
+        }
+      })
 
     const mappedReceivables = receivables
       .filter((r) => r.status === 'Em aberto')
-      .map((r) => ({
-        id: r.id,
-        kind: 'receber',
-        description: r.description,
-        party: (r.expand?.client_id as any)?.name || 'Cliente',
-        amount: r.amount,
-        dueDate: r.due_date,
-        isOverdue: r.due_date < todayStr,
-      }))
+      .map((r) => {
+        const d = r.due_date.split('T')[0]
+        return {
+          id: r.id,
+          kind: 'receber' as const,
+          description: r.description,
+          party: (r.expand?.client_id as any)?.name || 'Cliente',
+          amount: Number(r.amount) || 0,
+          dueDate: d,
+          isOverdue: d < todayStr,
+          isToday: d === todayStr,
+        }
+      })
 
     return [...mappedPayables, ...mappedReceivables]
       .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
@@ -843,36 +851,52 @@ export const Dashboard: React.FC = () => {
 
       {/* 2-Columns: Próximos Vencimentos & Últimas Movimentações */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Próximos Vencimentos */}
+        {/* Bloco Alertas: 5 Vencimentos Mais Urgentes */}
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-slate-800 text-sm tracking-tight flex items-center gap-2">
-                <Clock className="w-4 h-4 text-emerald-600" /> Próximos Vencimentos
-              </h3>
-              <span className="text-xs text-slate-400">Contas a Pagar / Receber</span>
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-amber-600" />
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm tracking-tight">
+                    Alertas: Vencimentos Mais Urgentes
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    5 títulos prioritários a pagar ou receber
+                  </p>
+                </div>
+              </div>
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                Atenção
+              </span>
             </div>
 
             {proximosVencimentos.length === 0 ? (
               <div className="py-12 text-center text-xs text-slate-400">
-                Nenhum título pendente cadastrado.
+                Nenhum título vencido ou a vencer encontrado. Parabéns, seu caixa está em dia!
               </div>
             ) : (
               <div className="divide-y divide-slate-100">
                 {proximosVencimentos.map((v) => (
-                  <div key={v.id} className="py-3 flex items-center justify-between gap-3">
+                  <div
+                    key={`${v.kind}-${v.id}`}
+                    onClick={() =>
+                      navigate(v.kind === 'pagar' ? '/contas-a-pagar' : '/contas-a-receber')
+                    }
+                    className="py-3 flex items-center justify-between gap-3 hover:bg-slate-50/70 p-1.5 rounded-lg transition cursor-pointer group"
+                  >
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <span
                           className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
                             v.kind === 'pagar'
-                              ? 'bg-red-50 text-red-700'
-                              : 'bg-emerald-50 text-emerald-700'
+                              ? 'bg-red-50 text-red-700 border border-red-200'
+                              : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                           }`}
                         >
                           {v.kind === 'pagar' ? 'A Pagar' : 'A Receber'}
                         </span>
-                        <p className="text-xs font-semibold text-slate-800 truncate">
+                        <p className="text-xs font-semibold text-slate-800 truncate group-hover:text-emerald-700 transition-colors">
                           {v.description}
                         </p>
                       </div>
@@ -882,15 +906,23 @@ export const Dashboard: React.FC = () => {
                     </div>
 
                     <div className="text-right shrink-0">
-                      <p className="text-xs font-bold font-mono text-slate-900">
-                        {formatCurrency(v.amount)}
+                      <p
+                        className={`text-xs font-bold font-mono ${
+                          v.kind === 'pagar' ? 'text-red-700' : 'text-emerald-700'
+                        }`}
+                      >
+                        {v.kind === 'pagar' ? '-' : '+'} {formatCurrency(v.amount)}
                       </p>
                       {v.isOverdue ? (
-                        <span className="inline-block text-[10px] font-semibold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
+                        <span className="inline-block text-[10px] font-bold text-red-700 bg-red-100 px-1.5 py-0.2 rounded mt-0.5 animate-pulse">
                           Atrasado
                         </span>
+                      ) : v.isToday ? (
+                        <span className="inline-block text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.2 rounded mt-0.5">
+                          Vence Hoje
+                        </span>
                       ) : (
-                        <span className="inline-block text-[10px] font-medium text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+                        <span className="inline-block text-[10px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded mt-0.5">
                           Em aberto
                         </span>
                       )}
@@ -901,31 +933,26 @@ export const Dashboard: React.FC = () => {
             )}
           </div>
 
-          <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/relatorios')}
-              className="text-xs text-emerald-700 hover:text-emerald-800 font-semibold"
-            >
-              Ver Relatório Completo <ChevronRight className="w-3.5 h-3.5 ml-1" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/contas-a-pagar')}
-              className="text-xs text-slate-600 hover:text-slate-900"
-            >
-              A Pagar
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/contas-a-receber')}
-              className="text-xs text-slate-600 hover:text-slate-900"
-            >
-              A Receber
-            </Button>
+          <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+            <span className="text-[11px] text-slate-400">Clique para abrir e quitar</span>
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/contas-a-pagar')}
+                className="text-xs text-red-700 border-red-200 hover:bg-red-50 h-8"
+              >
+                Contas a Pagar
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/contas-a-receber')}
+                className="text-xs text-emerald-700 border-emerald-200 hover:bg-emerald-50 h-8"
+              >
+                Contas a Receber
+              </Button>
+            </div>
           </div>
         </div>
 

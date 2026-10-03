@@ -48,6 +48,15 @@ export interface Customer {
   updated: string
 }
 
+export interface SaleItem {
+  product_id: string
+  name: string
+  sku?: string
+  quantity: number
+  unit_price: number
+  total: number
+}
+
 export interface Sale {
   id: string
   company_id: string
@@ -57,11 +66,33 @@ export interface Sale {
   amount: number
   status: 'Concluída' | 'Pendente' | 'Cancelada'
   payment_method?: 'À vista' | 'Pix' | 'Cartão' | 'Boleto' | 'Transferência'
+  items?: SaleItem[]
   created: string
   updated: string
   expand?: {
     customer_id?: Customer
   }
+}
+
+export type NotificationType =
+  | 'vencimento_pagar'
+  | 'vencimento_receber'
+  | 'estoque_baixo'
+  | 'agenda_hoje'
+  | 'sistema'
+
+export interface ErpNotification {
+  id: string
+  company_id: string
+  user_id: string
+  type: NotificationType
+  title: string
+  body: string
+  ref_id?: string
+  read: boolean
+  read_at?: string
+  created: string
+  updated: string
 }
 
 export interface Entry {

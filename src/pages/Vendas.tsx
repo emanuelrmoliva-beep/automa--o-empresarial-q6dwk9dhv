@@ -14,12 +14,26 @@ import {
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
 import { useRealtime } from '@/hooks/use-realtime'
-import { getSales, createSale, deleteSale, getCustomers, createMovement } from '@/services/erp'
-import type { Sale, Customer } from '@/types/erp'
+import {
+  getSales,
+  createSale,
+  updateSale,
+  deleteSale,
+  getCustomers,
+  getProducts,
+  createMovement,
+} from '@/services/erp'
+import {
+  calculateStockDeltas,
+  applyStockDeltas,
+  validateStockAvailability,
+} from '@/services/stockSync'
+import type { Sale, Customer, Product, SaleItem } from '@/types/erp'
 import { formatCurrency, formatDatePtBr } from '@/lib/formatters'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Edit2, Package, AlertCircle, X } from 'lucide-react'
 import {
   Select,
   SelectContent,
@@ -42,6 +56,7 @@ export const Vendas: React.FC = () => {
 
   const [sales, setSales] = useState<Sale[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
+  const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
 
   // Filtros
@@ -49,8 +64,9 @@ export const Vendas: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('Todos')
   const [periodFilter, setPeriodFilter] = useState('Todos')
 
-  // Modal Nova Venda
+  // Modal Nova / Edição de Venda
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingSale, setEditingSale] = useState<Sale | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [saleDate, setSaleDate] = useState(new Date().toISOString().split('T')[0])
   const [customerId, setCustomerId] = useState('')
@@ -61,18 +77,26 @@ export const Vendas: React.FC = () => {
     'À vista' | 'Pix' | 'Cartão' | 'Boleto' | 'Transferência'
   >('Pix')
 
+  // Itens da venda vinculados ao estoque
+  const [saleItems, setSaleItems] = useState<SaleItem[]>([])
+  const [selectedProductId, setSelectedProductId] = useState('')
+  const [selectedProductQty, setSelectedProductQty] = useState('1')
+  const [stockWarning, setStockWarning] = useState<string | null>(null)
+
   // Modal confirmação exclusão
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
 
   const loadData = useCallback(async () => {
     if (!company) return
     try {
-      const [salesData, custData] = await Promise.all([
+      const [salesData, custData, prodData] = await Promise.all([
         getSales(company.id),
         getCustomers(company.id),
+        getProducts(company.id),
       ])
       setSales(salesData)
       setCustomers(custData)
+      setProducts(prodData)
     } catch (err) {
       console.error(err)
     } finally {
@@ -85,9 +109,124 @@ export const Vendas: React.FC = () => {
   }, [loadData])
 
   useRealtime('sales', () => loadData(), !!company)
+  useRealtime('products', () => loadData(), !!company)
 
-  // Submissão de nova venda
-  const handleCreateSale = async (e: React.FormEvent) => {
+  // Abrir modal de criação
+  const handleOpenCreateModal = () => {
+    setEditingSale(null)
+    setSaleDate(new Date().toISOString().split('T')[0])
+    setCustomerId('')
+    setDescription('')
+    setAmount('')
+    setStatus('Concluída')
+    setPaymentMethod('Pix')
+    setSaleItems([])
+    setSelectedProductId('')
+    setSelectedProductQty('1')
+    setStockWarning(null)
+    setIsModalOpen(true)
+  }
+
+  // Abrir modal de edição
+  const handleOpenEditModal = (sale: Sale) => {
+    setEditingSale(sale)
+    setSaleDate(sale.sale_date.split('T')[0])
+    setCustomerId(sale.customer_id || '')
+    setDescription(sale.description)
+    setAmount(sale.amount.toString())
+    setStatus(sale.status)
+    setPaymentMethod(sale.payment_method || 'Pix')
+    setSaleItems(Array.isArray(sale.items) ? sale.items : [])
+    setSelectedProductId('')
+    setSelectedProductQty('1')
+    setStockWarning(null)
+    setIsModalOpen(true)
+  }
+
+  // Adicionar produto selecionado aos itens da venda
+  const handleAddProductItem = () => {
+    if (!selectedProductId) return
+    const prod = products.find((p) => p.id === selectedProductId)
+    if (!prod) return
+
+    const qty = parseInt(selectedProductQty, 10)
+    if (isNaN(qty) || qty <= 0) {
+      setStockWarning('Informe uma quantidade válida maior que zero.')
+      return
+    }
+
+    // Calcula quantidade total deste produto se já existir nos itens
+    const existingIndex = saleItems.findIndex((it) => it.product_id === prod.id)
+    const currentItemQty = existingIndex >= 0 ? saleItems[existingIndex].quantity : 0
+    const totalDemanded = currentItemQty + qty
+
+    // Se a venda for concluída, verifica se excede o estoque físico disponível
+    // Se for edição de venda já concluída, a quantidade antiga do snapshot conta
+    const previousQtyInThisSale =
+      editingSale && editingSale.status === 'Concluída' && Array.isArray(editingSale.items)
+        ? editingSale.items.find((it) => it.product_id === prod.id)?.quantity || 0
+        : 0
+
+    const availableStock = prod.quantity + previousQtyInThisSale
+
+    if (status === 'Concluída' && totalDemanded > availableStock) {
+      setStockWarning(
+        `Estoque insuficiente: restam ${prod.quantity} unidades de "${prod.name}" (total exigido: ${totalDemanded}).`,
+      )
+      return
+    }
+
+    setStockWarning(null)
+
+    let updatedList: SaleItem[]
+    if (existingIndex >= 0) {
+      updatedList = [...saleItems]
+      const updatedQty = updatedList[existingIndex].quantity + qty
+      updatedList[existingIndex] = {
+        ...updatedList[existingIndex],
+        quantity: updatedQty,
+        total: updatedQty * updatedList[existingIndex].unit_price,
+      }
+    } else {
+      const newItem: SaleItem = {
+        product_id: prod.id,
+        name: prod.name,
+        sku: prod.sku,
+        quantity: qty,
+        unit_price: prod.selling_price,
+        total: qty * prod.selling_price,
+      }
+      updatedList = [...saleItems, newItem]
+    }
+
+    setSaleItems(updatedList)
+
+    // Recalcula o valor total da venda a partir dos itens
+    const totalItemsValue = updatedList.reduce((sum, it) => sum + it.total, 0)
+    setAmount(totalItemsValue.toFixed(2))
+
+    // Se a descrição estiver vazia, preenche automaticamente
+    if (!description || description === 'Venda de Produtos/Serviços') {
+      const summaryDesc = updatedList.map((it) => `${it.quantity}x ${it.name}`).join(', ')
+      setDescription(summaryDesc)
+    }
+
+    setSelectedProductId('')
+    setSelectedProductQty('1')
+  }
+
+  const handleRemoveProductItem = (productId: string) => {
+    const updated = saleItems.filter((it) => it.product_id !== productId)
+    setSaleItems(updated)
+
+    if (updated.length > 0) {
+      const totalItemsValue = updated.reduce((sum, it) => sum + it.total, 0)
+      setAmount(totalItemsValue.toFixed(2))
+    }
+  }
+
+  // Submissão (Criar ou Atualizar)
+  const handleSubmitSale = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!company) return
     const numAmount = parseFloat(amount.replace(',', '.'))
@@ -100,47 +239,118 @@ export const Vendas: React.FC = () => {
       return
     }
 
+    // Se status for Concluída e houver itens vinculados, valida disponibilidade de estoque
+    if (status === 'Concluída' && saleItems.length > 0) {
+      const validation = await validateStockAvailability(
+        saleItems,
+        editingSale?.items || [],
+        !!editingSale,
+        editingSale?.status,
+      )
+
+      if (!validation.valid) {
+        setStockWarning(validation.errorMessage || 'Estoque insuficiente.')
+        toast({
+          variant: 'destructive',
+          title: 'Estoque insuficiente',
+          description: validation.errorMessage,
+        })
+        return
+      }
+    }
+
     try {
       setSubmitting(true)
-      const newSale = await createSale({
-        company_id: company.id,
-        customer_id: customerId || undefined,
-        sale_date: saleDate,
-        description: description || 'Venda de Produtos/Serviços',
-        amount: numAmount,
-        status,
-        payment_method: paymentMethod,
-      })
 
-      // Se a venda for concluída à vista/pix/cartão/transferência, registra no ledger de entradas
-      if (status === 'Concluída') {
-        await createMovement({
-          company_id: company.id,
-          movement_date: saleDate,
-          type: 'entrada',
-          description: `Venda: ${description || 'Venda Realizada'}`,
-          category: 'Venda',
+      if (editingSale) {
+        // EDICAO: Calcula deltas de estoque
+        const previousStatus = editingSale.status
+        const previousItems = Array.isArray(editingSale.items) ? editingSale.items : []
+        const deltas = calculateStockDeltas(previousStatus, previousItems, status, saleItems)
+
+        // Aplica deltas no estoque
+        const stockResult = await applyStockDeltas(deltas)
+        if (!stockResult.success) {
+          toast({
+            variant: 'destructive',
+            title: 'Erro no estoque',
+            description: stockResult.errors.join('; '),
+          })
+          setSubmitting(false)
+          return
+        }
+
+        await updateSale(editingSale.id, {
+          customer_id: customerId === 'avulso' || !customerId ? undefined : customerId,
+          sale_date: saleDate,
+          description: description || 'Venda de Produtos/Serviços',
           amount: numAmount,
-          reference: `sales/${newSale.id}`,
+          status,
+          payment_method: paymentMethod,
+          items: saleItems,
+        })
+
+        toast({
+          title: 'Venda atualizada!',
+          description:
+            status === 'Concluída'
+              ? 'Alterações salvas e estoque ajustado com sucesso.'
+              : 'Venda atualizada.',
+        })
+      } else {
+        // CRIACAO:
+        // Se criada como Concluída, calcula baixa de estoque
+        const deltas = calculateStockDeltas(null, [], status, saleItems)
+        const stockResult = await applyStockDeltas(deltas)
+        if (!stockResult.success) {
+          toast({
+            variant: 'destructive',
+            title: 'Erro no estoque',
+            description: stockResult.errors.join('; '),
+          })
+          setSubmitting(false)
+          return
+        }
+
+        const newSale = await createSale({
+          company_id: company.id,
+          customer_id: customerId === 'avulso' || !customerId ? undefined : customerId,
+          sale_date: saleDate,
+          description: description || 'Venda de Produtos/Serviços',
+          amount: numAmount,
+          status,
+          payment_method: paymentMethod,
+          items: saleItems,
+        })
+
+        // Registra entrada no ledger de movimentações se concluída
+        if (status === 'Concluída') {
+          await createMovement({
+            company_id: company.id,
+            movement_date: saleDate,
+            type: 'entrada',
+            description: `Venda: ${description || 'Venda Realizada'}`,
+            category: 'Venda',
+            amount: numAmount,
+            reference: `sales/${newSale.id}`,
+          })
+        }
+
+        toast({
+          title: 'Venda cadastrada!',
+          description:
+            status === 'Concluída' && saleItems.length > 0
+              ? 'Venda salva e baixa automática aplicada no estoque.'
+              : 'Registro incluído com sucesso.',
         })
       }
 
-      toast({
-        title: 'Venda cadastrada!',
-        description: 'Registro incluído com sucesso.',
-      })
-
-      // Limpar formulário
-      setDescription('')
-      setAmount('')
-      setCustomerId('')
-      setStatus('Concluída')
       setIsModalOpen(false)
       await loadData()
     } catch (err: any) {
       toast({
         variant: 'destructive',
-        title: 'Erro ao criar venda',
+        title: 'Erro ao salvar venda',
         description: err?.message || 'Falha na gravação dos dados.',
       })
     } finally {
@@ -148,13 +358,26 @@ export const Vendas: React.FC = () => {
     }
   }
 
+  // Excluir venda (estorna estoque se estava concluída)
   const handleDelete = async () => {
     if (!deleteTargetId) return
     try {
+      const targetSale = sales.find((s) => s.id === deleteTargetId)
+      if (
+        targetSale &&
+        targetSale.status === 'Concluída' &&
+        Array.isArray(targetSale.items) &&
+        targetSale.items.length > 0
+      ) {
+        // Devolve os itens ao estoque
+        const deltas = calculateStockDeltas('Concluída', targetSale.items, 'Cancelada', [])
+        await applyStockDeltas(deltas)
+      }
+
       await deleteSale(deleteTargetId)
       toast({
         title: 'Venda excluída',
-        description: 'O registro foi removido com sucesso.',
+        description: 'Venda removida e estoque estornado se aplicável.',
       })
       setDeleteTargetId(null)
       await loadData()
@@ -254,7 +477,7 @@ export const Vendas: React.FC = () => {
           </Button>
 
           <Button
-            onClick={() => setIsModalOpen(true)}
+            onClick={handleOpenCreateModal}
             className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold h-9 px-4 shadow-sm flex items-center gap-1.5"
           >
             <Plus className="w-4 h-4" /> Nova Venda
@@ -332,7 +555,7 @@ export const Vendas: React.FC = () => {
           title="Nenhuma venda encontrada"
           description="Comece a registrar as vendas da sua empresa clicando no botão abaixo."
           actionLabel="+ Nova Venda"
-          onAction={() => setIsModalOpen(true)}
+          onAction={handleOpenCreateModal}
         />
       ) : (
         <>
@@ -370,6 +593,21 @@ export const Vendas: React.FC = () => {
 
                 <p className="text-xs text-slate-600 line-clamp-2">{sale.description}</p>
 
+                {Array.isArray(sale.items) && sale.items.length > 0 && (
+                  <div className="text-[11px] bg-slate-50 p-2 rounded-lg border border-slate-100 space-y-1">
+                    <span className="font-semibold text-slate-600 flex items-center gap-1">
+                      <Package className="w-3 h-3 text-emerald-600" /> Itens baixados no estoque:
+                    </span>
+                    <ul className="list-disc list-inside text-slate-500 text-[10px] space-y-0.5">
+                      {sale.items.map((it, idx) => (
+                        <li key={idx}>
+                          {it.quantity}x {it.name} ({formatCurrency(it.unit_price)})
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
                 <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
                   <div>
                     <span className="text-[10px] text-slate-400 uppercase tracking-wider">
@@ -379,14 +617,24 @@ export const Vendas: React.FC = () => {
                       {formatCurrency(sale.amount)}
                     </p>
                   </div>
-                  <button
-                    onClick={() => setDeleteTargetId(sale.id)}
-                    className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 active:bg-red-100 transition"
-                    title="Excluir venda"
-                    aria-label="Excluir venda"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleOpenEditModal(sale)}
+                      className="p-2 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 active:bg-emerald-100 transition"
+                      title="Editar venda e itens"
+                      aria-label="Editar venda"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setDeleteTargetId(sale.id)}
+                      className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 active:bg-red-100 transition"
+                      title="Excluir venda"
+                      aria-label="Excluir venda"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -416,8 +664,13 @@ export const Vendas: React.FC = () => {
                       <td className="py-3 px-4 text-slate-700 max-w-[160px] truncate">
                         {sale.expand?.customer_id?.name || 'Cliente Avulso'}
                       </td>
-                      <td className="py-3 px-4 text-slate-600 max-w-[200px] truncate">
-                        {sale.description}
+                      <td className="py-3 px-4 text-slate-600 max-w-[220px]">
+                        <p className="truncate font-medium">{sale.description}</p>
+                        {Array.isArray(sale.items) && sale.items.length > 0 && (
+                          <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded font-mono">
+                            <Package className="w-2.5 h-2.5" /> {sale.items.length} item(ns)
+                          </span>
+                        )}
                       </td>
                       <td className="py-3 px-4 text-slate-500">{sale.payment_method || '-'}</td>
                       <td className="py-3 px-4 font-bold font-mono text-slate-900 text-right whitespace-nowrap">
@@ -440,13 +693,22 @@ export const Vendas: React.FC = () => {
                         </span>
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <button
-                          onClick={() => setDeleteTargetId(sale.id)}
-                          className="p-1.5 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
-                          title="Excluir venda"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => handleOpenEditModal(sale)}
+                            className="p-1.5 rounded text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 transition"
+                            title="Editar venda"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setDeleteTargetId(sale.id)}
+                            className="p-1.5 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
+                            title="Excluir venda"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -457,16 +719,24 @@ export const Vendas: React.FC = () => {
         </>
       )}
 
-      {/* Modal Nova Venda */}
+      {/* Modal Nova / Editar Venda com baixa de estoque */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="w-[95vw] sm:max-w-[480px] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+        <DialogContent className="w-[95vw] sm:max-w-[560px] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-slate-900">
-              Registrar Nova Venda
+            <DialogTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <ShoppingCart className="w-5 h-5 text-emerald-600" />
+              {editingSale ? 'Editar Venda' : 'Registrar Nova Venda'}
             </DialogTitle>
           </DialogHeader>
 
-          <form onSubmit={handleCreateSale} className="space-y-4 py-2">
+          <form onSubmit={handleSubmitSale} className="space-y-4 py-2">
+            {/* Aviso de estoque insuficiente */}
+            {stockWarning && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2 text-xs text-red-700">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-600 mt-0.5" />
+                <span>{stockWarning}</span>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="saleDate" className="text-xs font-semibold text-slate-700">
@@ -516,9 +786,95 @@ export const Vendas: React.FC = () => {
               </Select>
             </div>
 
+            {/* Seletor de Produtos do Estoque com Baixa Automática */}
+            <div className="bg-slate-50/80 p-3 rounded-xl border border-slate-200 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <Package className="w-3.5 h-3.5 text-emerald-600" />
+                  Vincular Produtos do Estoque (Baixa Automática)
+                </Label>
+                <span className="text-[10px] text-slate-400">Opcional por item</span>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="flex-1 min-w-0">
+                  <Select
+                    value={selectedProductId}
+                    onValueChange={(val) => {
+                      setSelectedProductId(val)
+                      setStockWarning(null)
+                    }}
+                  >
+                    <SelectTrigger className="h-9 text-xs bg-white">
+                      <SelectValue placeholder="Selecione um produto para adicionar..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {products.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name} — {formatCurrency(p.selling_price)} (Estoque: {p.quantity} un)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min="1"
+                    placeholder="Qtd"
+                    value={selectedProductQty}
+                    onChange={(e) => setSelectedProductQty(e.target.value)}
+                    className="w-16 h-9 text-xs bg-white text-center font-mono"
+                  />
+                  <Button
+                    type="button"
+                    onClick={handleAddProductItem}
+                    disabled={!selectedProductId}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-9 px-3 shrink-0"
+                  >
+                    + Adicionar
+                  </Button>
+                </div>
+              </div>
+
+              {/* Lista de itens vinculados */}
+              {saleItems.length > 0 && (
+                <div className="mt-2 space-y-1.5 border-t border-slate-200/80 pt-2">
+                  <span className="text-[10px] font-semibold text-slate-500 uppercase">
+                    Itens incluídos nesta venda:
+                  </span>
+                  <div className="space-y-1 max-h-36 overflow-y-auto">
+                    {saleItems.map((item) => (
+                      <div
+                        key={item.product_id}
+                        className="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs"
+                      >
+                        <div className="min-w-0">
+                          <p className="font-semibold text-slate-800 truncate">{item.name}</p>
+                          <p className="text-[10px] text-slate-400 font-mono">
+                            {item.quantity} un x {formatCurrency(item.unit_price)} ={' '}
+                            <strong className="text-slate-700">{formatCurrency(item.total)}</strong>
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveProductItem(item.product_id)}
+                          className="p-1 text-slate-400 hover:text-red-600 transition"
+                          title="Remover item"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="space-y-1.5">
               <Label htmlFor="description" className="text-xs font-semibold text-slate-700">
-                Descrição dos Itens / Serviços
+                Descrição dos Itens / Serviços <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="description"
@@ -584,6 +940,8 @@ export const Vendas: React.FC = () => {
                   <>
                     <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Salvando...
                   </>
+                ) : editingSale ? (
+                  'Atualizar Venda'
                 ) : (
                   'Confirmar Venda'
                 )}

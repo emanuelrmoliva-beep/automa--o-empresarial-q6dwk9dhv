@@ -252,6 +252,152 @@ export const HELP_TOPICS: HelpTopic[] = [
     ],
   },
   {
+    id: 'venda-vinculada-estoque',
+    category: 'operacao',
+    categoryLabel: 'Operação Diária',
+    title: 'Ligação Venda ↔ Estoque (Baixa e Estorno Automáticos)',
+    shortDescription:
+      'Como funciona a baixa automática de produtos ao vender, estorno em cancelamentos e proteção contra estoque negativo.',
+    iconName: 'Package',
+    route: '/vendas',
+    badge: 'Novidade',
+    keywords: [
+      'baixa de estoque',
+      'venda com estoque',
+      'estorno',
+      'cancelamento',
+      'estoque negativo',
+      'saldo insuficiente',
+      'itens da venda',
+      'inventário',
+    ],
+    highlights: [
+      'Baixa automática e imediata no saldo físico dos produtos quando a venda é salva como "Concluída".',
+      'Bloqueio seguro contra estoque insuficiente ou negativo (avisa a quantidade disponível na seleção).',
+      'Estorno automático: ao cancelar a venda ou excluir, os produtos retornam integralmente ao estoque.',
+      'Edição inteligente: ao alterar quantidades ou trocar itens, o sistema calcula a diferença antiga e nova com precisão.',
+    ],
+    steps: [
+      {
+        title: '1. Adicionar Itens do Estoque na Venda',
+        description:
+          'No modal de Nova Venda, você conta com o seletor "Vincular Produtos do Estoque". Ao selecionar um item, o sistema mostra o preço de venda e o saldo disponível em tempo real (ex.: 15 un).',
+      },
+      {
+        title: '2. Validação e Bloqueio de Estoque Insuficiente',
+        description:
+          'Se você tentar vender uma quantidade maior do que a disponível no inventário físico, o sistema exibe um alerta vermelho em destaque ("Estoque insuficiente: restam apenas X unidades de Y") e impede a gravação para manter a acurácia do estoque.',
+      },
+      {
+        title: '3. Baixa Automática ao Concluir',
+        description:
+          'Ao confirmar a venda com o status "Concluída", as quantidades são subtraídas diretamente do estoque dos respectivos produtos.',
+      },
+      {
+        title: '4. Ajuste em Edições de Venda',
+        description:
+          'Se você editar uma venda (aumentar/diminuir quantidades ou remover itens), o ERP compara o snapshot anterior com os novos itens e recalcula os deltas, mantendo o estoque perfeitamente balanceado.',
+      },
+      {
+        title: '5. Cancelamento ou Exclusão (Estorno Automático)',
+        description:
+          'Caso mude o status para "Cancelada" ou decida excluir uma venda concluída, todos os itens que haviam saído retornam automaticamente ao estoque da empresa.',
+      },
+    ],
+  },
+  {
+    id: 'relatorios-pdf-export',
+    category: 'gestao',
+    categoryLabel: 'Metas & Relatórios',
+    title: 'Relatórios Oficiais em PDF & CSV',
+    shortDescription:
+      'Como gerar relatórios executivos em PDF com cabeçalho da empresa, dados em BRL, tabelas zebradas e paginação.',
+    iconName: 'FileSpreadsheet',
+    route: '/relatorios',
+    badge: 'Novidade',
+    keywords: [
+      'pdf',
+      'relatórios em pdf',
+      'resumo mensal',
+      'vencimentos',
+      'exportar pdf',
+      'dre',
+      'impressão',
+      'documento',
+    ],
+    highlights: [
+      'Geração 100% no cliente sem limite de download e sem demora.',
+      'Cabeçalho corporativo com nome da empresa, CNPJ, data/hora de emissão e período.',
+      'Tabelas zebradas formatadas com padrão contábil brasileiro (R$ com separador de milhar e decimal).',
+      'Rodapé com numeração oficial "Página X de Y".',
+    ],
+    steps: [
+      {
+        title: '1. Relatório de Vencimentos Futuros em PDF',
+        description:
+          'Na aba "Vencimentos Futuros", clique em "Exportar PDF". O documento é gerado contendo o resumo dos títulos em aberto, o saldo líquido projetado e cada faixa de vencimento (vencidos, hoje, semana, 15, 30, 60 dias) com seus respectivos subtotais.',
+      },
+      {
+        title: '2. Resumo Mensal Consolidado em PDF',
+        description:
+          'Na aba "Resumo Mensal", escolha o mês e ano desejados e clique em "Exportar PDF". O documento inclui o quadro de indicadores (Receitas, Despesas, Resultado Operacional e Vendas), o detalhamento por categoria/centro de custo, o extrato de lançamentos e as contas pendentes.',
+      },
+      {
+        title: '3. Manutenção da Exportação em CSV',
+        description:
+          'Os botões de CSV continuam disponíveis lado a lado para abrir os dados brutos no Excel ou Google Planilhas.',
+      },
+    ],
+  },
+  {
+    id: 'notificacoes-sistema',
+    category: 'operacao',
+    categoryLabel: 'Operação Diária',
+    title: 'Sistema de Notificações & Alertas no Topo',
+    shortDescription:
+      'Como acompanhar contas vencendo, estoque abaixo do mínimo e compromissos da agenda pelo ícone do sino.',
+    iconName: 'Bell',
+    route: '/dashboard',
+    badge: 'Novidade',
+    keywords: [
+      'notificações',
+      'sino',
+      'alertas',
+      'vencimentos',
+      'lembretes',
+      'estoque baixo',
+      'marcar como lida',
+    ],
+    highlights: [
+      'Sino dinâmico na barra superior mostrando o contador exato de pendências não lidas.',
+      'Cores semânticas: vermelho para atrasados, âmbar para vencimentos próximos e estoque baixo, esmeralda para entregas de hoje.',
+      'Ações rápidas de "Marcar como lida" individual e "Marcar todas como lidas" com persistência no banco.',
+      'Bloco de Alertas no Dashboard com os 5 títulos mais urgentes e atalho direto para quitação.',
+    ],
+    steps: [
+      {
+        title: '1. O Sino de Notificações no Topo',
+        description:
+          'No topo do ERP, o ícone do sino exibe uma bolha vermelha com a quantidade de notificações pendentes. Ao clicar, um painel responsivo se abre.',
+      },
+      {
+        title: '2. Tipos de Alertas Monitorados',
+        description:
+          '(a) Contas a pagar e receber vencidas ou vencendo nos próximos 7 dias; (b) Alerta consolidado de produtos com estoque zerado ou abaixo do mínimo de segurança; (c) Entregas e pedidos agendados para a data de hoje.',
+      },
+      {
+        title: '3. Navegação Rápida',
+        description:
+          'Ao clicar em qualquer notificação no dropdown, o ERP direciona você diretamente para a tela de resolução (Contas a Pagar, Receber, Estoque ou Agenda).',
+      },
+      {
+        title: '4. Marcar como Lida',
+        description:
+          'Você pode clicar no ícone de check de uma notificação individual ou usar o botão "Marcar todas como lidas". As notificações lidas ficam salvas no PocketBase e não voltam a apitar.',
+      },
+    ],
+  },
+  {
     id: 'clientes',
     category: 'operacao',
     categoryLabel: 'Operação Diária',

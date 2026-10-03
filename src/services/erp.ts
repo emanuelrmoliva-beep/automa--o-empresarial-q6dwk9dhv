@@ -11,6 +11,7 @@ import type {
   Movement,
   Goal,
   AgendaEvent,
+  ErpNotification,
 } from '@/types/erp'
 
 // Companies
@@ -83,8 +84,18 @@ export async function getSales(companyId: string): Promise<Sale[]> {
   })
 }
 
+export async function getSaleById(id: string): Promise<Sale> {
+  return await pb.collection('sales').getOne<Sale>(id, {
+    expand: 'customer_id',
+  })
+}
+
 export async function createSale(data: Partial<Sale>): Promise<Sale> {
   return await pb.collection('sales').create<Sale>(data)
+}
+
+export async function updateSale(id: string, data: Partial<Sale>): Promise<Sale> {
+  return await pb.collection('sales').update<Sale>(id, data)
 }
 
 export async function deleteSale(id: string): Promise<boolean> {
@@ -226,4 +237,53 @@ export async function updateAgendaEvent(
 
 export async function deleteAgendaEvent(id: string): Promise<boolean> {
   return await pb.collection('agenda_events').delete(id)
+}
+
+// Notifications
+export async function getNotifications(
+  companyId: string,
+  userId: string,
+  limit = 40,
+): Promise<ErpNotification[]> {
+  try {
+    return await pb
+      .collection('notifications')
+      .getList<ErpNotification>(1, limit, {
+        filter: `company_id = "${companyId}" && user_id = "${userId}"`,
+        sort: '-created',
+      })
+      .then((res) => res.items)
+  } catch (err) {
+    console.error('Erro ao buscar notificações:', err)
+    return []
+  }
+}
+
+export async function createNotification(data: Partial<ErpNotification>): Promise<ErpNotification> {
+  return await pb.collection('notifications').create<ErpNotification>(data)
+}
+
+export async function markNotificationAsRead(id: string): Promise<ErpNotification> {
+  return await pb.collection('notifications').update<ErpNotification>(id, {
+    read: true,
+    read_at: new Date().toISOString(),
+  })
+}
+
+export async function markAllNotificationsAsRead(companyId: string, userId: string): Promise<void> {
+  try {
+    const unread = await pb.collection('notifications').getFullList<ErpNotification>({
+      filter: `company_id = "${companyId}" && user_id = "${userId}" && read = false`,
+    })
+    await Promise.all(
+      unread.map((n) =>
+        pb.collection('notifications').update(n.id, {
+          read: true,
+          read_at: new Date().toISOString(),
+        }),
+      ),
+    )
+  } catch (err) {
+    console.error('Erro ao marcar todas como lidas:', err)
+  }
 }

@@ -25,6 +25,7 @@ import {
   HelpCircle,
 } from 'lucide-react'
 import HelpModal from '@/components/HelpModal'
+import NotificationsDropdown from '@/components/NotificationsDropdown'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
 import {
@@ -345,13 +346,8 @@ export const Layout: React.FC = () => {
                 </span>
               </button>
 
-              <button
-                className="relative p-2 rounded-lg text-slate-500 hover:bg-slate-100 transition"
-                title="Notificações"
-              >
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-white" />
-              </button>
+              {/* Dropdown de Notificações Ativo */}
+              <NotificationsDropdown />
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
