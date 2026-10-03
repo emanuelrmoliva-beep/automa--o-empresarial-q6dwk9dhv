@@ -17,6 +17,7 @@ import CompanyOnboarding from '@/pages/CompanyOnboarding'
 import Dashboard from '@/pages/Dashboard'
 import Vendas from '@/pages/Vendas'
 import Orcamentos from '@/pages/Orcamentos'
+import PedidosEmAberto from '@/pages/PedidosEmAberto'
 import Cotacoes from '@/pages/Cotacoes'
 import Clientes from '@/pages/Clientes'
 import Estoque from '@/pages/Estoque'
@@ -96,6 +97,7 @@ const App = () => (
             <Route path="/metas" element={<Metas />} />
             <Route path="/relatorios" element={<Relatorios />} />
             <Route path="/vendas" element={<Vendas />} />
+            <Route path="/pedidos-em-aberto" element={<PedidosEmAberto />} />
             <Route path="/orcamentos" element={<Orcamentos />} />
             <Route path="/cotacoes" element={<Cotacoes />} />
             <Route path="/clientes" element={<Clientes />} />

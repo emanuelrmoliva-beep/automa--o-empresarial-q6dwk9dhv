@@ -47,6 +47,7 @@ import {
   getSales,
   getGoals,
   getAgendaEvents,
+  getQuotes,
 } from '@/services/erp'
 import type {
   Entry,
@@ -57,6 +58,7 @@ import type {
   Sale,
   Goal,
   AgendaEvent,
+  Quote,
 } from '@/types/erp'
 import { formatCurrency, formatDatePtBr } from '@/lib/formatters'
 import { useRealtime } from '@/hooks/use-realtime'
@@ -86,6 +88,7 @@ export const Dashboard: React.FC = () => {
   const [sales, setSales] = useState<Sale[]>([])
   const [goals, setGoals] = useState<Goal[]>([])
   const [agendaEvents, setAgendaEvents] = useState<AgendaEvent[]>([])
+  const [quotes, setQuotes] = useState<Quote[]>([])
   const [loading, setLoading] = useState(true)
   const [helpModalOpen, setHelpModalOpen] = useState(false)
   const [selectedHelpTopic, setSelectedHelpTopic] = useState<string | null>(null)
@@ -98,17 +101,27 @@ export const Dashboard: React.FC = () => {
   const loadData = useCallback(async () => {
     if (!company) return
     try {
-      const [entData, expData, payData, recData, movData, salData, goalData, agendaData] =
-        await Promise.all([
-          getEntries(company.id),
-          getExpenses(company.id),
-          getPayables(company.id),
-          getReceivables(company.id),
-          getMovements(company.id),
-          getSales(company.id),
-          getGoals(company.id),
-          getAgendaEvents(company.id),
-        ])
+      const [
+        entData,
+        expData,
+        payData,
+        recData,
+        movData,
+        salData,
+        goalData,
+        agendaData,
+        quotesData,
+      ] = await Promise.all([
+        getEntries(company.id),
+        getExpenses(company.id),
+        getPayables(company.id),
+        getReceivables(company.id),
+        getMovements(company.id),
+        getSales(company.id),
+        getGoals(company.id),
+        getAgendaEvents(company.id),
+        getQuotes(company.id),
+      ])
       setEntries(entData)
       setExpenses(expData)
       setPayables(payData)
@@ -117,6 +130,7 @@ export const Dashboard: React.FC = () => {
       setSales(salData)
       setGoals(goalData)
       setAgendaEvents(agendaData)
+      setQuotes(quotesData)
     } catch (err) {
       console.error('Erro ao carregar dados do Dashboard:', err)
     } finally {
@@ -137,6 +151,7 @@ export const Dashboard: React.FC = () => {
   useRealtime('sales', () => loadData(), !!company)
   useRealtime('goals', () => loadData(), !!company)
   useRealtime('agenda_events', () => loadData(), !!company)
+  useRealtime('quotes', () => loadData(), !!company)
 
   // Cálculos do Mês Corrente
   const currentMonth = new Date().getMonth()
@@ -364,6 +379,25 @@ export const Dashboard: React.FC = () => {
     return movements.slice(0, 6)
   }, [movements])
 
+  // Pedidos e Orçamentos em Aberto (Resumo Consolidado para o Dashboard)
+  const openOrdersSummary = useMemo(() => {
+    const sentQuotes = quotes.filter((q) => q.status === 'Enviado')
+    const pendingAgenda = agendaEvents.filter(
+      (ev) => ev.status === 'pendente' || ev.status === 'em_andamento',
+    )
+    const count = sentQuotes.length + pendingAgenda.length
+    const quotesTotal = sentQuotes.reduce((sum, q) => sum + (Number(q.total_amount) || 0), 0)
+    const agendaTotal = pendingAgenda.reduce((sum, ev) => sum + (Number(ev.amount) || 0), 0)
+    const totalAmount = quotesTotal + agendaTotal
+
+    return {
+      count,
+      totalAmount,
+      sentQuotesCount: sentQuotes.length,
+      pendingAgendaCount: pendingAgenda.length,
+    }
+  }, [quotes, agendaEvents])
+
   return (
     <div className="space-y-6">
       {/* Modal / Tela de Boas-vindas Diária */}
@@ -439,6 +473,14 @@ export const Dashboard: React.FC = () => {
           <ShoppingCart className="w-4 h-4" /> + Nova Venda
         </Button>
         <Button
+          onClick={() => navigate('/pedidos-em-aberto')}
+          variant="outline"
+          className="border-slate-300 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 text-xs font-semibold h-9 px-3.5 shrink-0"
+        >
+          <Clock className="w-4 h-4 text-emerald-600" /> Pedidos em Aberto (
+          {openOrdersSummary.count})
+        </Button>
+        <Button
           onClick={() => navigate('/agenda')}
           variant="outline"
           className="border-slate-300 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 text-xs font-semibold h-9 px-3.5 shrink-0"
@@ -475,8 +517,33 @@ export const Dashboard: React.FC = () => {
         </Button>
       </div>
 
-      {/* 4 Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* 5 Metric Cards (Incluindo Pedidos em Aberto) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {/* Pedidos em Aberto (Novo) */}
+        <div
+          onClick={() => navigate('/pedidos-em-aberto')}
+          className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between hover:border-emerald-300 hover:shadow-sm transition cursor-pointer group"
+        >
+          <div className="flex items-center justify-between text-slate-500">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 group-hover:text-emerald-700 transition">
+              Pedidos em Aberto
+            </span>
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <Clock className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <p className="text-2xl font-bold tracking-tight text-slate-900 font-mono">
+              {formatCurrency(openOrdersSummary.totalAmount)}
+            </p>
+            <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium mt-1">
+              <span>{openOrdersSummary.count} aguardando</span>
+              <span className="text-emerald-600 font-semibold group-hover:underline">
+                Ver todos →
+              </span>
+            </div>
+          </div>
+        </div>
         {/* Receitas do Mês */}
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-500">

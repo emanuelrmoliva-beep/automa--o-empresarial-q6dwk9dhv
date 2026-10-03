@@ -25,12 +25,14 @@ import {
   CalendarDays,
   FileSpreadsheet,
   HelpCircle,
+  Clock,
 } from 'lucide-react'
 import HelpModal from '@/components/HelpModal'
 import NotificationsDropdown from '@/components/NotificationsDropdown'
+import OnboardingTour from '@/components/OnboardingTour'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
-import { getPbFileUrl } from '@/services/erp'
+import { getPbFileUrl, markUserTourCompleted, resetUserTour } from '@/services/erp'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,6 +53,36 @@ export const Layout: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
   const [initialHelpTopic, setInitialHelpTopic] = useState<string | null>(null)
+  const [tourOpen, setTourOpen] = useState(false)
+
+  // Checar se deve exibir o tour guiado no primeiro acesso após concluir onboarding da empresa
+  React.useEffect(() => {
+    if (user && company) {
+      // Se user não tiver tour_completed_at preenchido e não estiver em onboarding
+      const isCompleted = !!(user as any).tour_completed_at
+      if (!isCompleted && !sessionStorage.getItem('tour_dismissed_session')) {
+        setTourOpen(true)
+      }
+    }
+  }, [user, company])
+
+  const handleCloseTour = async (completed: boolean) => {
+    setTourOpen(false)
+    sessionStorage.setItem('tour_dismissed_session', 'true')
+    if (user) {
+      await markUserTourCompleted(user.id)
+    }
+    toast({
+      title: 'Tour Concluído!',
+      description:
+        'Você pode consultar a Central de Ajuda a qualquer momento clicando no ícone "?"',
+    })
+  }
+
+  const handleRestartTour = () => {
+    setHelpOpen(false)
+    setTourOpen(true)
+  }
 
   const handleOpenHelp = (topicId?: string) => {
     setInitialHelpTopic(topicId || null)
@@ -72,6 +104,7 @@ export const Layout: React.FC = () => {
       items: [
         { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { path: '/agenda', label: 'Agenda & Entregas', icon: CalendarDays },
+        { path: '/pedidos-em-aberto', label: 'Pedidos em Aberto', icon: Clock },
         { path: '/vendas', label: 'Vendas', icon: ShoppingCart },
         { path: '/orcamentos', label: 'Orçamentos', icon: FileText },
         { path: '/clientes', label: 'Clientes', icon: Users },
@@ -119,6 +152,7 @@ export const Layout: React.FC = () => {
     const p = location.pathname
     if (p.startsWith('/dashboard')) return 'Dashboard Operacional'
     if (p.startsWith('/agenda')) return 'Agenda de Pedidos e Entregas'
+    if (p.startsWith('/pedidos-em-aberto')) return 'Controle de Pedidos em Aberto'
     if (p.startsWith('/metas')) return 'Sistema de Metas & Réguas'
     if (p.startsWith('/relatorios')) return 'Central de Relatórios & Projeção'
     if (p.startsWith('/vendas')) return 'Vendas Comerciais'
@@ -446,7 +480,15 @@ export const Layout: React.FC = () => {
           </div>
 
           {/* Central de Ajuda & Tutorial Modal */}
-          <HelpModal open={helpOpen} onOpenChange={setHelpOpen} initialTopicId={initialHelpTopic} />
+          <HelpModal
+            open={helpOpen}
+            onOpenChange={setHelpOpen}
+            initialTopicId={initialHelpTopic}
+            onRestartTour={handleRestartTour}
+          />
+
+          {/* Tour Guiado de Primeiro Acesso */}
+          <OnboardingTour open={tourOpen} onClose={handleCloseTour} />
 
           {/* Mobile Bottom Navigation Bar for quick thumb navigation */}
           <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 flex items-center justify-around py-1.5 px-2 safe-area-pb shadow-lg">

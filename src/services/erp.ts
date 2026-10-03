@@ -366,6 +366,27 @@ export async function deleteSupplierQuote(id: string): Promise<boolean> {
   return await pb.collection('supplier_quotes').delete(id)
 }
 
+// User Tour completion
+export async function markUserTourCompleted(userId: string): Promise<void> {
+  try {
+    await pb.collection('users').update(userId, {
+      tour_completed_at: new Date().toISOString(),
+    })
+  } catch (err) {
+    console.warn('Erro ao salvar conclusão do tour:', err)
+  }
+}
+
+export async function resetUserTour(userId: string): Promise<void> {
+  try {
+    await pb.collection('users').update(userId, {
+      tour_completed_at: null,
+    })
+  } catch (err) {
+    console.warn('Erro ao resetar tour do usuário:', err)
+  }
+}
+
 // Exportação / Backup Completo da Empresa
 export interface FullCompanyBackup {
   metadata: {

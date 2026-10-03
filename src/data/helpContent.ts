@@ -39,6 +39,60 @@ export const HELP_CATEGORIES = [
 
 export const HELP_TOPICS: HelpTopic[] = [
   {
+    id: 'controle-pedidos-aberto',
+    category: 'operacao',
+    categoryLabel: 'Operação Diária',
+    title: 'Controle de Pedidos em Aberto & Prazos de Resposta',
+    shortDescription:
+      'Acompanhe orçamentos enviados aguardando resposta do cliente e pedidos/entregas da agenda com cálculo de dias em aberto e ações rápidas.',
+    iconName: 'Clock',
+    route: '/pedidos-em-aberto',
+    badge: 'Novidade',
+    keywords: [
+      'pedidos em aberto',
+      'orçamentos enviados',
+      'aguardando resposta',
+      'prazos',
+      'dias em aberto',
+      'urgência',
+      'aprovar e vender',
+      'recusar',
+      'concluir entrega',
+      'controle',
+      'pendências',
+    ],
+    highlights: [
+      'Consolidação inteligente de orçamentos com status "Enviado" e pedidos/entregas da Agenda pendentes.',
+      'Contador visual de dias em aberto (ex.: "Aberto hoje", "5 dias em aberto") com sinalização semântica de urgência.',
+      'Card métrico integrado no Dashboard com o valor total e quantidade em aberto.',
+      'Ações rápidas para aprovar & vender com 1 clique, marcar como recusado ou concluir entrega na agenda.',
+      'Ordenação rápida por maior tempo em aberto ou maiores valores em Reais.',
+    ],
+    steps: [
+      {
+        title: '1. Acessar o Módulo de Pedidos em Aberto',
+        description:
+          'No menu lateral, na seção "Operação", clique em "Pedidos em Aberto" (ou clique no card de resumo no Dashboard).',
+      },
+      {
+        title: '2. Analisar o Tempo em Aberto e a Urgência',
+        description:
+          'Cada card mostra a quantidade exata de dias desde o envio da proposta ou data do agendamento. Itens com mais de 7 dias sem resposta ganham destaque em vermelho para cobrança prioritária.',
+        tip: 'Ligue ou envie mensagem pelo WhatsApp para clientes cujas propostas estão há mais de 3 dias sem retorno para aumentar a taxa de conversão.',
+      },
+      {
+        title: '3. Ações Rápidas sem Trocar de Tela',
+        description:
+          'Clique em "Aprovar & Vender" para transformar a proposta aprovada instantaneamente em venda com baixa de estoque, ou "Recusado" se o cliente declinou. Em eventos da agenda, clique em "Concluir" assim que a entrega for realizada.',
+      },
+      {
+        title: '4. Filtrar por Origem e Ordenar',
+        description:
+          'Utilize os seletores no topo para alternar entre orçamentos e agenda, ou ordenar pelos pedidos mais antigos ou de maior valor financeiro.',
+      },
+    ],
+  },
+  {
     id: 'orcamentos-compartilhar',
     category: 'operacao',
     categoryLabel: 'Operação Diária',

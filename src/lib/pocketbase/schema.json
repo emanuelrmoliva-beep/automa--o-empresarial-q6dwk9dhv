@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-03T22:52:31.471Z",
+  "generatedAt": "2026-10-03T22:58:49.349Z",
   "collections": [
     {
       "name": "users",
@@ -37,6 +37,12 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "tour_completed_at",
+          "type": "date",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": [

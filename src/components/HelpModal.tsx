@@ -44,6 +44,8 @@ import {
   FileText,
   Scale,
   LineChart,
+  Clock,
+  RotateCcw,
 } from 'lucide-react'
 import { HELP_TOPICS, HELP_CATEGORIES, FAQ_LIST, HelpTopic } from '@/data/helpContent'
 
@@ -51,6 +53,7 @@ interface HelpModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   initialTopicId?: string | null
+  onRestartTour?: () => void
 }
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -73,9 +76,15 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   FileText,
   Scale,
   LineChart,
+  Clock,
 }
 
-export const HelpModal: React.FC<HelpModalProps> = ({ open, onOpenChange, initialTopicId }) => {
+export const HelpModal: React.FC<HelpModalProps> = ({
+  open,
+  onOpenChange,
+  initialTopicId,
+  onRestartTour,
+}) => {
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('todos')
@@ -478,19 +487,36 @@ export const HelpModal: React.FC<HelpModalProps> = ({ open, onOpenChange, initia
         {/* Rodapé do Modal */}
         <div className="p-3 bg-white border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500 shrink-0">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-            <span>
-              Automação Empresarial • Precisa de suporte presencial? Contate o administrador.
+            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block shrink-0" />
+            <span className="truncate">
+              Automação Empresarial • O ícone flutuante <strong>?</strong> está sempre disponível
+              para dúvidas.
             </span>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onOpenChange(false)}
-            className="text-xs text-slate-700 hover:bg-slate-100 h-8"
-          >
-            Fechar Ajuda
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            {onRestartTour && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  onOpenChange(false)
+                  onRestartTour()
+                }}
+                className="text-xs text-emerald-800 border-emerald-300 hover:bg-emerald-50 h-8 flex items-center gap-1.5"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Refazer Tour</span>
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onOpenChange(false)}
+              className="text-xs text-slate-700 hover:bg-slate-100 h-8"
+            >
+              Fechar Ajuda
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
