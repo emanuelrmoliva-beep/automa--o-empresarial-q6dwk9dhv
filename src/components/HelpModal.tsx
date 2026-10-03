@@ -39,6 +39,11 @@ import {
   X,
   ExternalLink,
   ChevronRight,
+  Barcode,
+  Printer,
+  FileText,
+  Scale,
+  LineChart,
 } from 'lucide-react'
 import { HELP_TOPICS, HELP_CATEGORIES, FAQ_LIST, HelpTopic } from '@/data/helpContent'
 
@@ -63,6 +68,11 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   CalendarDays,
   FileSpreadsheet,
   Smartphone,
+  Barcode,
+  Printer,
+  FileText,
+  Scale,
+  LineChart,
 }
 
 export const HelpModal: React.FC<HelpModalProps> = ({ open, onOpenChange, initialTopicId }) => {

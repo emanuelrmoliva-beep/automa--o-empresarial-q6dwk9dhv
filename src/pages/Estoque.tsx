@@ -16,6 +16,8 @@ import {
   UploadCloud,
   X,
   Image as ImageIcon,
+  Barcode,
+  Printer,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
@@ -48,6 +50,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { EmptyState } from '@/components/EmptyState'
+import { PrintLabelsModal } from '@/components/PrintLabelsModal'
 
 const CATEGORIES = ['Todos', 'Produtos', 'Alimentos', 'Bebidas', 'Vestuário', 'Serviços', 'Outros']
 
@@ -85,6 +88,10 @@ export const Estoque: React.FC = () => {
 
   // Modal Exclusão
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
+
+  // Modal Impressão de Etiquetas & Código de Barras
+  const [isLabelsModalOpen, setIsLabelsModalOpen] = useState(false)
+  const [labelsModalProducts, setLabelsModalProducts] = useState<Product[]>([])
 
   const loadData = useCallback(async () => {
     if (!company) return
@@ -286,6 +293,17 @@ export const Estoque: React.FC = () => {
     return products.filter((p) => p.quantity <= (p.min_stock || 0)).length
   }, [products])
 
+  // Ações de Etiquetas
+  const handleOpenLabelsBatch = () => {
+    setLabelsModalProducts(filteredProducts)
+    setIsLabelsModalOpen(true)
+  }
+
+  const handleOpenSingleLabel = (product: Product) => {
+    setLabelsModalProducts([product])
+    setIsLabelsModalOpen(true)
+  }
+
   // Exportar CSV
   const handleExportCsv = () => {
     if (products.length === 0) return
@@ -346,33 +364,18 @@ export const Estoque: React.FC = () => {
             </button>
           </div>
 
-          {/* Alternador de Visualização: Catálogo (Cards com foto) ou Tabela */}
-          <div className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 shadow-2xs">
-            <button
-              type="button"
-              onClick={() => setViewMode('catalog')}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition ${
-                viewMode === 'catalog'
-                  ? 'bg-emerald-600 text-white shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Grid className="w-3.5 h-3.5" />
-              <span>Catálogo</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('table')}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition ${
-                viewMode === 'table'
-                  ? 'bg-emerald-600 text-white shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <List className="w-3.5 h-3.5" />
-              <span>Tabela</span>
-            </button>
-          </div>
+          {/* Botão Imprimir Etiquetas em Lote */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleOpenLabelsBatch}
+            disabled={products.length === 0}
+            className="border-slate-200 text-slate-700 hover:text-emerald-700 hover:border-emerald-300 text-xs sm:text-sm font-semibold shadow-2xs"
+            title="Gerar folha A4 com etiquetas de preço e código de barras"
+          >
+            <Barcode className="w-4 h-4 mr-1.5 text-emerald-600" />
+            <span>Etiquetas</span>
+          </Button>
 
           <Button
             onClick={openCreateModal}
@@ -549,6 +552,14 @@ export const Estoque: React.FC = () => {
 
                   <div className="flex items-center gap-1">
                     <button
+                      type="button"
+                      onClick={() => handleOpenSingleLabel(p)}
+                      className="p-1 rounded text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 transition"
+                      title="Imprimir Etiqueta com Código de Barras"
+                    >
+                      <Barcode className="w-3.5 h-3.5" />
+                    </button>
+                    <button
                       onClick={() => openEditModal(p)}
                       className="p-1 rounded text-slate-400 hover:text-slate-800 hover:bg-slate-200 transition"
                       title="Editar"
@@ -646,6 +657,14 @@ export const Estoque: React.FC = () => {
                     </button>
 
                     <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenSingleLabel(p)}
+                        className="p-2 rounded-lg text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 active:bg-emerald-100 transition"
+                        title="Imprimir Etiqueta"
+                      >
+                        <Barcode className="w-4 h-4" />
+                      </button>
                       <button
                         onClick={() => openEditModal(p)}
                         className="p-2 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200 transition"
@@ -749,6 +768,14 @@ export const Estoque: React.FC = () => {
 
                         <td className="py-3 px-4 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenSingleLabel(p)}
+                              className="p-1.5 rounded text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 transition"
+                              title="Imprimir Etiqueta com Código de Barras"
+                            >
+                              <Barcode className="w-3.5 h-3.5" />
+                            </button>
                             <button
                               onClick={() => openEditModal(p)}
                               className="p-1 rounded text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition"
@@ -1047,6 +1074,15 @@ export const Estoque: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Impressão de Etiquetas & Código de Barras */}
+      <PrintLabelsModal
+        isOpen={isLabelsModalOpen}
+        onClose={() => setIsLabelsModalOpen(false)}
+        company={company}
+        initialProducts={labelsModalProducts}
+        allAvailableProducts={filteredProducts}
+      />
 
       {/* Confirmação de exclusão */}
       <Dialog open={!!deleteTargetId} onOpenChange={() => setDeleteTargetId(null)}>

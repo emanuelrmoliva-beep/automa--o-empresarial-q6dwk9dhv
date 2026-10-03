@@ -85,6 +85,62 @@ export const HELP_TOPICS: HelpTopic[] = [
     ],
   },
   {
+    id: 'etiquetas-codigos-barras',
+    category: 'produtos',
+    categoryLabel: 'Produtos & Preços',
+    title: 'Etiquetas de Preço & Códigos de Barras (Code 128)',
+    shortDescription:
+      'Gere e imprima folhas A4 com etiquetas adesivas de preço e código de barras padrão Code 128 com a marca da sua empresa.',
+    iconName: 'Barcode',
+    route: '/estoque',
+    badge: 'Novidade',
+    keywords: [
+      'etiquetas',
+      'código de barras',
+      'barcode',
+      'code 128',
+      'impressão',
+      'pimaco',
+      'a4',
+      'adesivo',
+      'preço',
+      'sku',
+      'gôndola',
+      'leitor',
+    ],
+    highlights: [
+      'Geração 100% client-side em padrão internacional Code 128 (compatível com leitores ópticos comuns e scanners de celular).',
+      'Grade padrão A4 com 40 etiquetas por folha (4 colunas × 10 linhas, formato Pimaco 6350 / A425).',
+      'Exibição do logotipo e nome da empresa, nome do produto, preço de venda em Real em destaque e código legível.',
+      'Geração em lote para produtos filtrados ou impressão de etiqueta avulsa direto do card de produto.',
+      'Geração automática de código baseado no ID caso o produto ainda não tenha SKU cadastrado.',
+    ],
+    steps: [
+      {
+        title: '1. Acessar o Módulo de Estoque',
+        description:
+          'No menu lateral, acerte em "Estoque". Você verá a listagem de mercadorias com fotos, preços de custo/venda e saldo.',
+      },
+      {
+        title: '2. Abrir o Gerador de Etiquetas (Em Lote ou Individual)',
+        description:
+          'Para imprimir em lote, clique no botão "Etiquetas" no topo da página. Para imprimir um produto específico, clique no ícone de código de barras no card do produto ou na tabela.',
+        tip: 'Você pode filtrar por categoria ou termo de busca antes de abrir o modal para selecionar apenas o grupo desejado.',
+      },
+      {
+        title: '3. Escolher Quantidades e Cópias por Etiqueta',
+        description:
+          'No modal, defina quantas cópias deseja imprimir de cada item. Você pode usar a ferramenta "Cópias padrão" para aplicar um mesmo número a todos ou ajustar individualmente.',
+      },
+      {
+        title: '4. Gerar e Imprimir o PDF A4',
+        description:
+          'Clique em "Imprimir Folha A4 (PDF)". O documento é gerado instantaneamente no formato exato de folhas adesivas de mercado.',
+        tip: 'Na janela de impressão da impressora, mantenha a escala em 100% ("Tamanho Real") para garantir que as etiquetas coincidam milimetricamente com os adesivos.',
+      },
+    ],
+  },
+  {
     id: 'catalogo-produtos-fotos',
     category: 'produtos',
     categoryLabel: 'Produtos & Preços',
