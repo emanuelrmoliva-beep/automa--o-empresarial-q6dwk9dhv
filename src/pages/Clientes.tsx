@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Plus,
   Search,
@@ -13,6 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  History,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
@@ -43,6 +45,7 @@ import { EmptyState } from '@/components/EmptyState'
 const ITEMS_PER_PAGE = 12
 
 export const Clientes: React.FC = () => {
+  const navigate = useNavigate()
   const { company } = useAuth()
   const { toast } = useToast()
 
@@ -292,15 +295,23 @@ export const Clientes: React.FC = () => {
 
                   <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition">
                     <button
+                      onClick={() => navigate(`/clientes/${cust.id}/historico`)}
+                      className="p-1.5 rounded-md text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 transition"
+                      title="Ver Histórico do Cliente (Compras, Orçamentos, Pagamentos)"
+                      aria-label="Ver Histórico"
+                    >
+                      <History className="w-4 h-4" />
+                    </button>
+                    <button
                       onClick={() => openEditModal(cust)}
-                      className="p-1 rounded text-slate-400 hover:text-slate-800 hover:bg-slate-100"
+                      className="p-1.5 rounded-md text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition"
                       title="Editar"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => setDeleteTargetId(cust.id)}
-                      className="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50"
+                      className="p-1.5 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
                       title="Excluir"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -336,6 +347,21 @@ export const Clientes: React.FC = () => {
                   Obs: {cust.notes}
                 </div>
               )}
+
+              {/* Ação rápida para Histórico */}
+              <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => navigate(`/clientes/${cust.id}/historico`)}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
+                >
+                  <History className="w-3.5 h-3.5 text-emerald-600" />
+                  Ver Histórico Completo
+                </button>
+                <span className="text-[10px] text-slate-400 font-mono">
+                  ID: {cust.id.slice(0, 6)}
+                </span>
+              </div>
             </div>
           ))}
         </div>

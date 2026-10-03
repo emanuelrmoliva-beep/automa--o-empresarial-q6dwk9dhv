@@ -743,6 +743,59 @@ export const HELP_TOPICS: HelpTopic[] = [
     ],
   },
   {
+    id: 'historico-cliente',
+    category: 'operacao',
+    categoryLabel: 'Operação Diária',
+    title: 'Histórico do Cliente 360°',
+    shortDescription:
+      'Tela consolidada com todas as compras concluídas, orçamentos, contas a receber pendentes, ticket médio e gráfico de frequência.',
+    iconName: 'History',
+    route: '/clientes',
+    badge: 'Novidade',
+    keywords: [
+      'histórico do cliente',
+      'histórico',
+      'interações',
+      'compras do cliente',
+      'orçamentos do cliente',
+      'pagamentos do cliente',
+      'ticket médio',
+      'contas a receber cliente',
+      'timeline',
+      'evolução de compras',
+    ],
+    highlights: [
+      'Linha do tempo cronológica com todas as vendas, orçamentos e contas a receber de cada cliente.',
+      'Gráfico de barras dos últimos 12 meses para ver sazonalidade e frequência de compras.',
+      'Cards de resumo financeiro: total gasto, ticket médio, total pendente em aberto e títulos vencidos.',
+      'Filtros por período (30d, 90d, 6 meses, ano, tudo) e busca textual por produtos ou observações.',
+      'Exportação com 1 clique para planilha CSV de todo o histórico do cliente.',
+    ],
+    steps: [
+      {
+        title: '1. Acessar o Histórico do Cliente',
+        description:
+          'No módulo "Clientes", localize o contato desejado e clique no botão com ícone de relógio ou no link "Ver Histórico Completo". Na tela de Vendas, você também pode clicar diretamente sobre o nome do cliente para abrir seu histórico.',
+        tip: 'O histórico é uma excelente ferramenta antes de ligar ou enviar propostas: você vê tudo o que o cliente já comprou e se possui dívidas em aberto.',
+      },
+      {
+        title: '2. Analisar os Indicadores de Resumo (KPIs)',
+        description:
+          'No topo você confere os cartões de resumo: Total faturado em compras, quantidade de compras, ticket médio, valor total de orçamentos (e quantos em aberto), valor pendente a receber e se há inadimplência.',
+      },
+      {
+        title: '3. Explorar o Gráfico de Evolução e as Abas',
+        description:
+          'Veja o gráfico de barras dos últimos 12 meses. Logo abaixo, navegue pelas abas: "Linha do Tempo Completa", apenas "Compras/Vendas", apenas "Orçamentos" ou apenas "Pagamentos/Contas a Receber".',
+      },
+      {
+        title: '4. Filtrar por Período e Exportar em Planilha',
+        description:
+          'Utilize os botões de período (30 dias, 90 dias, 6 meses, Este ano ou Tudo) ou digite qualquer termo na busca. Para gerar relatório, clique no botão "Exportar CSV".',
+      },
+    ],
+  },
+  {
     id: 'estoque',
     category: 'produtos',
     categoryLabel: 'Produtos & Preços',

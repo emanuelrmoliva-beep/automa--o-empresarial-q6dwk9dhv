@@ -84,6 +84,10 @@ export async function getCustomers(companyId: string): Promise<Customer[]> {
   })
 }
 
+export async function getCustomerById(id: string): Promise<Customer> {
+  return await pb.collection('customers').getOne<Customer>(id)
+}
+
 export async function createCustomer(data: Partial<Customer>): Promise<Customer> {
   return await pb.collection('customers').create<Customer>(data)
 }
@@ -190,6 +194,53 @@ export async function getReceivables(companyId: string): Promise<Receivable[]> {
     sort: 'due_date',
     expand: 'client_id',
   })
+}
+
+export interface CustomerHistoryData {
+  customer: Customer
+  sales: Sale[]
+  quotes: Quote[]
+  receivables: Receivable[]
+}
+
+export async function getCustomerHistory(
+  companyId: string,
+  customerId: string,
+): Promise<CustomerHistoryData> {
+  const [customer, sales, quotes, receivables] = await Promise.all([
+    pb.collection('customers').getOne<Customer>(customerId),
+    pb
+      .collection('sales')
+      .getFullList<Sale>({
+        filter: `company_id = "${companyId}" && customer_id = "${customerId}"`,
+        sort: '-sale_date',
+        expand: 'customer_id',
+      })
+      .catch(() => [] as Sale[]),
+    pb
+      .collection('quotes')
+      .getFullList<Quote>({
+        filter: `company_id = "${companyId}" && customer_id = "${customerId}"`,
+        sort: '-issue_date',
+        expand: 'customer_id',
+      })
+      .catch(() => [] as Quote[]),
+    pb
+      .collection('receivables')
+      .getFullList<Receivable>({
+        filter: `company_id = "${companyId}" && client_id = "${customerId}"`,
+        sort: '-due_date',
+        expand: 'client_id',
+      })
+      .catch(() => [] as Receivable[]),
+  ])
+
+  return {
+    customer,
+    sales,
+    quotes,
+    receivables,
+  }
 }
 
 export async function createReceivable(data: Partial<Receivable>): Promise<Receivable> {

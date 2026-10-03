@@ -20,6 +20,7 @@ import Orcamentos from '@/pages/Orcamentos'
 import PedidosEmAberto from '@/pages/PedidosEmAberto'
 import Cotacoes from '@/pages/Cotacoes'
 import Clientes from '@/pages/Clientes'
+import ClienteHistorico from '@/pages/ClienteHistorico'
 import Estoque from '@/pages/Estoque'
 import FormacaoDePrecos from '@/pages/FormacaoDePrecos'
 import Receitas from '@/pages/Receitas'
@@ -101,6 +102,7 @@ const App = () => (
             <Route path="/orcamentos" element={<Orcamentos />} />
             <Route path="/cotacoes" element={<Cotacoes />} />
             <Route path="/clientes" element={<Clientes />} />
+            <Route path="/clientes/:id/historico" element={<ClienteHistorico />} />
             <Route path="/estoque" element={<Estoque />} />
             <Route path="/formacao-de-precos" element={<FormacaoDePrecos />} />
             <Route path="/receitas" element={<Receitas />} />

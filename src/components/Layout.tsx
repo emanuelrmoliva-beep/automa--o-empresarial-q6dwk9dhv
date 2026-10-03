@@ -158,6 +158,7 @@ export const Layout: React.FC = () => {
     if (p.startsWith('/vendas')) return 'Vendas Comerciais'
     if (p.startsWith('/orcamentos')) return 'Orçamentos & Propostas'
     if (p.startsWith('/cotacoes')) return 'Cotações & Comparativo de Fornecedores'
+    if (p.startsWith('/clientes/') && p.includes('/historico')) return 'Histórico do Cliente'
     if (p.startsWith('/clientes')) return 'Cadastro de Clientes'
     if (p.startsWith('/estoque')) return 'Controle de Estoque & Catálogo'
     if (p.startsWith('/formacao-de-precos')) return 'Formação de Preços & Markup'

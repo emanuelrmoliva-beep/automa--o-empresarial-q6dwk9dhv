@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Plus,
   Search,
@@ -51,6 +52,7 @@ import {
 import { EmptyState } from '@/components/EmptyState'
 
 export const Vendas: React.FC = () => {
+  const navigate = useNavigate()
   const { company } = useAuth()
   const { toast } = useToast()
 
@@ -571,9 +573,22 @@ export const Vendas: React.FC = () => {
                     <span className="text-[11px] font-medium text-slate-400">
                       {formatDatePtBr(sale.sale_date)}
                     </span>
-                    <h4 className="text-sm font-bold text-slate-900 leading-tight mt-0.5">
-                      {sale.expand?.customer_id?.name || 'Cliente Avulso'}
-                    </h4>
+                    <div className="leading-tight mt-0.5">
+                      {sale.customer_id ? (
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/clientes/${sale.customer_id}/historico`)}
+                          className="text-sm font-bold text-slate-900 hover:text-emerald-700 hover:underline text-left block truncate"
+                          title="Ver Histórico deste Cliente"
+                        >
+                          {sale.expand?.customer_id?.name || 'Ver Cliente'}
+                        </button>
+                      ) : (
+                        <h4 className="text-sm font-bold text-slate-900 leading-tight">
+                          Cliente Avulso
+                        </h4>
+                      )}
+                    </div>
                   </div>
                   <span
                     className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${
@@ -662,7 +677,18 @@ export const Vendas: React.FC = () => {
                         {formatDatePtBr(sale.sale_date)}
                       </td>
                       <td className="py-3 px-4 text-slate-700 max-w-[160px] truncate">
-                        {sale.expand?.customer_id?.name || 'Cliente Avulso'}
+                        {sale.customer_id ? (
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/clientes/${sale.customer_id}/historico`)}
+                            className="text-left font-medium text-slate-800 hover:text-emerald-700 hover:underline truncate block"
+                            title="Ver Histórico deste Cliente"
+                          >
+                            {sale.expand?.customer_id?.name || 'Ver Cliente'}
+                          </button>
+                        ) : (
+                          'Cliente Avulso'
+                        )}
                       </td>
                       <td className="py-3 px-4 text-slate-600 max-w-[220px]">
                         <p className="truncate font-medium">{sale.description}</p>
