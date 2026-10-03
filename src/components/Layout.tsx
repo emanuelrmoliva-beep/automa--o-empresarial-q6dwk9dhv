@@ -22,7 +22,9 @@ import {
   Target,
   CalendarDays,
   FileSpreadsheet,
+  HelpCircle,
 } from 'lucide-react'
+import HelpModal from '@/components/HelpModal'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
 import {
@@ -43,6 +45,13 @@ export const Layout: React.FC = () => {
 
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
+  const [initialHelpTopic, setInitialHelpTopic] = useState<string | null>(null)
+
+  const handleOpenHelp = (topicId?: string) => {
+    setInitialHelpTopic(topicId || null)
+    setHelpOpen(true)
+  }
 
   const handleLogout = () => {
     logout()
@@ -80,6 +89,21 @@ export const Layout: React.FC = () => {
         { path: '/estoque', label: 'Estoque', icon: Package },
         { path: '/formacao-de-precos', label: 'Formação de Preços', icon: Calculator },
         { path: '/entradas-saidas', label: 'Entradas e Saídas', icon: History },
+      ],
+    },
+    {
+      label: 'Suporte & Ajuda',
+      items: [
+        {
+          path: '#ajuda',
+          label: 'Ajuda & Tutorial',
+          icon: HelpCircle,
+          isAction: true,
+          action: () => {
+            setMobileOpen(false)
+            handleOpenHelp()
+          },
+        },
       ],
     },
   ]
@@ -156,8 +180,28 @@ export const Layout: React.FC = () => {
                 {group.label}
               </h4>
             )}
-            {group.items.map((item) => {
+            {group.items.map((item: any) => {
               const Icon = item.icon
+              if (item.isAction) {
+                return (
+                  <button
+                    key={item.label}
+                    onClick={item.action}
+                    className="w-full group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/40 text-left"
+                    title={isCollapsed ? item.label : undefined}
+                  >
+                    <Icon className="w-5 h-5 shrink-0 text-emerald-400 group-hover:scale-110 transition-transform" />
+                    {!isCollapsed && (
+                      <span className="truncate flex items-center justify-between w-full font-semibold">
+                        {item.label}
+                        <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-mono">
+                          ?
+                        </span>
+                      </span>
+                    )}
+                  </button>
+                )
+              }
               return (
                 <NavLink
                   key={item.path}
@@ -287,7 +331,20 @@ export const Layout: React.FC = () => {
             </div>
 
             {/* Right TopBar Actions */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
+              {/* Botão de Ajuda no TopBar */}
+              <button
+                onClick={() => handleOpenHelp()}
+                className="flex items-center gap-1.5 p-2 rounded-lg text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 transition border border-transparent hover:border-emerald-200"
+                title="Ajuda & Tutorial do Sistema"
+                aria-label="Abrir tutorial e ajuda"
+              >
+                <HelpCircle className="w-5 h-5 text-emerald-600" />
+                <span className="hidden md:inline-block text-xs font-semibold text-emerald-800">
+                  Ajuda
+                </span>
+              </button>
+
               <button
                 className="relative p-2 rounded-lg text-slate-500 hover:bg-slate-100 transition"
                 title="Notificações"
@@ -344,7 +401,7 @@ export const Layout: React.FC = () => {
           </header>
 
           {/* Page Content with smooth transition */}
-          <main className="flex-1 p-3 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto animate-fade-in pb-20 lg:pb-8 overflow-x-hidden">
+          <main className="flex-1 p-3 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto animate-fade-in pb-24 lg:pb-12 overflow-x-hidden">
             <Outlet />
           </main>
 
@@ -352,6 +409,25 @@ export const Layout: React.FC = () => {
           <footer className="hidden lg:block py-4 border-t border-slate-200 text-center text-xs text-slate-500 bg-white">
             Automação Empresarial © 2025 • Todos os direitos reservados
           </footer>
+
+          {/* Botão Flutuante de Ajuda "?" (Canto Inferior Direito) */}
+          <div className="fixed bottom-16 sm:bottom-6 right-4 sm:right-6 z-40">
+            <button
+              onClick={() => handleOpenHelp()}
+              className="group relative flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-lg hover:shadow-emerald-500/30 hover:scale-105 active:scale-95 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-400/30"
+              title="Ajuda & Dúvidas sobre o sistema (?)"
+              aria-label="Abrir Ajuda e Tutorial"
+            >
+              <HelpCircle className="w-6 h-6 sm:w-7 sm:h-7 stroke-[2.2] group-hover:rotate-12 transition-transform" />
+              {/* Tooltip flutuante sutil em desktop */}
+              <span className="hidden sm:inline-block pointer-events-none absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-slate-900 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                Dúvidas? Ver Tutorial
+              </span>
+            </button>
+          </div>
+
+          {/* Central de Ajuda & Tutorial Modal */}
+          <HelpModal open={helpOpen} onOpenChange={setHelpOpen} initialTopicId={initialHelpTopic} />
 
           {/* Mobile Bottom Navigation Bar for quick thumb navigation */}
           <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 flex items-center justify-around py-1.5 px-2 safe-area-pb shadow-lg">
@@ -422,10 +498,19 @@ export const Layout: React.FC = () => {
                   <ReceiptText
                     className={`w-5 h-5 mb-0.5 ${isActive ? 'text-emerald-600 stroke-[2.5]' : ''}`}
                   />
-                  <span>Financeiro</span>
+                  <span>Finanças</span>
                 </>
               )}
             </NavLink>
+
+            <button
+              onClick={() => handleOpenHelp()}
+              className="flex flex-col items-center justify-center py-1 px-2.5 rounded-lg text-[10px] font-medium text-emerald-600 hover:text-emerald-700 transition"
+              aria-label="Abrir Ajuda e Tutorial"
+            >
+              <HelpCircle className="w-5 h-5 mb-0.5 stroke-[2.2]" />
+              <span className="font-semibold">Ajuda</span>
+            </button>
 
             <button
               onClick={() => setMobileOpen(true)}
@@ -433,7 +518,7 @@ export const Layout: React.FC = () => {
               aria-label="Abrir menu de módulos"
             >
               <Menu className="w-5 h-5 mb-0.5" />
-              <span>Mais</span>
+              <span>Menu</span>
             </button>
           </nav>
         </div>

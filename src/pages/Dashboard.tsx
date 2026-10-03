@@ -18,7 +18,10 @@ import {
   FileSpreadsheet,
   AlertTriangle,
   CheckCircle2,
+  HelpCircle,
+  BookOpen,
 } from 'lucide-react'
+import HelpModal from '@/components/HelpModal'
 import {
   BarChart,
   Bar,
@@ -84,6 +87,13 @@ export const Dashboard: React.FC = () => {
   const [goals, setGoals] = useState<Goal[]>([])
   const [agendaEvents, setAgendaEvents] = useState<AgendaEvent[]>([])
   const [loading, setLoading] = useState(true)
+  const [helpModalOpen, setHelpModalOpen] = useState(false)
+  const [selectedHelpTopic, setSelectedHelpTopic] = useState<string | null>(null)
+
+  const handleOpenDashboardHelp = (topicId?: string) => {
+    setSelectedHelpTopic(topicId || null)
+    setHelpModalOpen(true)
+  }
 
   const loadData = useCallback(async () => {
     if (!company) return
@@ -368,33 +378,49 @@ export const Dashboard: React.FC = () => {
           </p>
         </div>
 
-        {company && (
-          <div className="flex items-center justify-between gap-3 bg-slate-50 p-3 sm:px-4 sm:py-2.5 rounded-xl border border-slate-200/80">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-emerald-600/10 text-emerald-700 flex items-center justify-center shrink-0">
-                <Building2 className="w-5 h-5" />
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          {company && (
+            <div className="flex items-center justify-between gap-3 bg-slate-50 p-2.5 sm:px-3.5 sm:py-2 rounded-xl border border-slate-200/80">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-emerald-600/10 text-emerald-700 flex items-center justify-center shrink-0">
+                  <Building2 className="w-4 h-4" />
+                </div>
+                <div className="text-xs leading-tight min-w-0">
+                  <p className="font-bold text-slate-900 truncate max-w-[130px] sm:max-w-[160px]">
+                    {company.trade_name}
+                  </p>
+                  <p className="text-slate-500 font-mono text-[10px] truncate">{company.cnpj}</p>
+                </div>
               </div>
-              <div className="text-xs leading-tight min-w-0">
-                <p className="font-bold text-slate-900 truncate">{company.trade_name}</p>
-                <p className="text-slate-500 font-mono text-[10px] sm:text-[11px] truncate">
-                  {company.cnpj}
-                </p>
-                <p className="text-emerald-700 font-medium text-[10px] sm:text-[11px] mt-0.5 truncate">
-                  {company.city}/{company.state}
-                </p>
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/configuracoes')}
+                className="text-[11px] text-slate-600 hover:text-slate-900 shrink-0 h-7 px-2"
+              >
+                Editar
+              </Button>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/configuracoes')}
-              className="text-xs text-slate-600 hover:text-slate-900 shrink-0 h-8 px-2.5"
-            >
-              Editar
-            </Button>
-          </div>
-        )}
+          )}
+
+          {/* Botão de Destaque para Tutorial no Dashboard */}
+          <Button
+            onClick={() => handleOpenDashboardHelp()}
+            className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-semibold h-9 px-3 shrink-0 flex items-center gap-1.5 shadow-2xs"
+            title="Aprenda como operar cada funcionalidade"
+          >
+            <HelpCircle className="w-4 h-4 text-emerald-600" />
+            <span>Guia & Tutorial</span>
+          </Button>
+        </div>
       </div>
+
+      {/* Help Modal Integrado ao Dashboard */}
+      <HelpModal
+        open={helpModalOpen}
+        onOpenChange={setHelpModalOpen}
+        initialTopicId={selectedHelpTopic}
+      />
 
       {/* Quick Actions Strip */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
