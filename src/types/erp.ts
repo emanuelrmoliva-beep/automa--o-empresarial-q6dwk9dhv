@@ -140,3 +140,53 @@ export interface Movement {
   created: string
   updated: string
 }
+
+export type GoalType =
+  | 'faturamento'
+  | 'lucro'
+  | 'vendas_qtd'
+  | 'reducao_despesas'
+  | 'equipamento_investimento'
+  | 'livre'
+
+export type GoalPeriod = 'mensal' | 'trimestral' | 'semestral' | 'anual'
+
+export type GoalStatus = 'em_andamento' | 'concluida' | 'cancelada'
+
+export interface Goal {
+  id: string
+  company_id: string
+  title: string
+  goal_type: GoalType
+  period_type: GoalPeriod
+  start_date: string
+  end_date: string
+  target_value: number
+  current_value?: number
+  status: GoalStatus
+  notes?: string
+  created: string
+  updated: string
+}
+
+export type AgendaEventType = 'Pedido' | 'Entrega' | 'Outro'
+
+export type AgendaEventStatus = 'pendente' | 'em_andamento' | 'concluido' | 'cancelado'
+
+export interface AgendaEvent {
+  id: string
+  company_id: string
+  title: string
+  event_type: AgendaEventType
+  customer_id?: string
+  event_date: string
+  event_time?: string
+  amount?: number
+  status: AgendaEventStatus
+  notes?: string
+  created: string
+  updated: string
+  expand?: {
+    customer_id?: Customer
+  }
+}

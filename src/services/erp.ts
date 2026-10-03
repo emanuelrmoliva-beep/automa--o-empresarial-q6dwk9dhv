@@ -9,6 +9,8 @@ import type {
   Payable,
   Receivable,
   Movement,
+  Goal,
+  AgendaEvent,
 } from '@/types/erp'
 
 // Companies
@@ -180,4 +182,48 @@ export async function getMovements(companyId: string): Promise<Movement[]> {
 
 export async function createMovement(data: Partial<Movement>): Promise<Movement> {
   return await pb.collection('movements').create<Movement>(data)
+}
+
+// Goals (Metas)
+export async function getGoals(companyId: string): Promise<Goal[]> {
+  return await pb.collection('goals').getFullList<Goal>({
+    filter: `company_id = "${companyId}"`,
+    sort: '-created',
+  })
+}
+
+export async function createGoal(data: Partial<Goal>): Promise<Goal> {
+  return await pb.collection('goals').create<Goal>(data)
+}
+
+export async function updateGoal(id: string, data: Partial<Goal>): Promise<Goal> {
+  return await pb.collection('goals').update<Goal>(id, data)
+}
+
+export async function deleteGoal(id: string): Promise<boolean> {
+  return await pb.collection('goals').delete(id)
+}
+
+// Agenda Events (Pedidos e Entregas)
+export async function getAgendaEvents(companyId: string): Promise<AgendaEvent[]> {
+  return await pb.collection('agenda_events').getFullList<AgendaEvent>({
+    filter: `company_id = "${companyId}"`,
+    sort: 'event_date',
+    expand: 'customer_id',
+  })
+}
+
+export async function createAgendaEvent(data: Partial<AgendaEvent>): Promise<AgendaEvent> {
+  return await pb.collection('agenda_events').create<AgendaEvent>(data)
+}
+
+export async function updateAgendaEvent(
+  id: string,
+  data: Partial<AgendaEvent>,
+): Promise<AgendaEvent> {
+  return await pb.collection('agenda_events').update<AgendaEvent>(id, data)
+}
+
+export async function deleteAgendaEvent(id: string): Promise<boolean> {
+  return await pb.collection('agenda_events').delete(id)
 }

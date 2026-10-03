@@ -25,6 +25,9 @@ import ContasAPagar from '@/pages/ContasAPagar'
 import ContasAReceber from '@/pages/ContasAReceber'
 import EntradasSaidas from '@/pages/EntradasSaidas'
 import CompanySettings from '@/pages/CompanySettings'
+import Metas from '@/pages/Metas'
+import Agenda from '@/pages/Agenda'
+import Relatorios from '@/pages/Relatorios'
 import NotFound from '@/pages/NotFound'
 
 const App = () => (
@@ -87,6 +90,9 @@ const App = () => (
             }
           >
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/agenda" element={<Agenda />} />
+            <Route path="/metas" element={<Metas />} />
+            <Route path="/relatorios" element={<Relatorios />} />
             <Route path="/vendas" element={<Vendas />} />
             <Route path="/clientes" element={<Clientes />} />
             <Route path="/estoque" element={<Estoque />} />

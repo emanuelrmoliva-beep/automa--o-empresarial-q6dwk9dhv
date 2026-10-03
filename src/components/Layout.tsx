@@ -19,6 +19,9 @@ import {
   ChevronRight,
   Bell,
   Settings,
+  Target,
+  CalendarDays,
+  FileSpreadsheet,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
@@ -55,6 +58,7 @@ export const Layout: React.FC = () => {
       label: 'Operação',
       items: [
         { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { path: '/agenda', label: 'Agenda & Entregas', icon: CalendarDays },
         { path: '/vendas', label: 'Vendas', icon: ShoppingCart },
         { path: '/clientes', label: 'Clientes', icon: Users },
       ],
@@ -62,6 +66,8 @@ export const Layout: React.FC = () => {
     {
       label: 'Financeiro',
       items: [
+        { path: '/metas', label: 'Metas & Réguas', icon: Target },
+        { path: '/relatorios', label: 'Relatórios', icon: FileSpreadsheet },
         { path: '/receitas', label: 'Receitas', icon: ArrowDownLeft },
         { path: '/despesas', label: 'Despesas', icon: ArrowUpRight },
         { path: '/contas-a-pagar', label: 'Contas a Pagar', icon: CreditCard },
@@ -82,6 +88,9 @@ export const Layout: React.FC = () => {
   const getPageTitle = () => {
     const p = location.pathname
     if (p.startsWith('/dashboard')) return 'Dashboard Operacional'
+    if (p.startsWith('/agenda')) return 'Agenda de Pedidos e Entregas'
+    if (p.startsWith('/metas')) return 'Sistema de Metas & Réguas'
+    if (p.startsWith('/relatorios')) return 'Central de Relatórios'
     if (p.startsWith('/vendas')) return 'Vendas'
     if (p.startsWith('/clientes')) return 'Cadastro de Clientes'
     if (p.startsWith('/estoque')) return 'Controle de Estoque'

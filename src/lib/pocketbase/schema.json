@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-03T21:33:01.632Z",
+  "generatedAt": "2026-10-03T21:57:25.727Z",
   "collections": [
     {
       "name": "users",
@@ -846,6 +846,197 @@
         "CREATE INDEX idx_movements_company_date ON movements (company_id, movement_date DESC)",
         "CREATE INDEX idx_movements_type ON movements (type)",
         "CREATE INDEX idx_movements_reference ON movements (company_id, reference)"
+      ]
+    },
+    {
+      "name": "goals",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "view": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "create": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "update": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "delete": "@request.auth.id != '' && company_id.user_id = @request.auth.id"
+      },
+      "fields": [
+        {
+          "name": "company_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "companies"
+        },
+        {
+          "name": "title",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "goal_type",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": [
+            "faturamento",
+            "lucro",
+            "vendas_qtd",
+            "reducao_despesas",
+            "equipamento_investimento",
+            "livre"
+          ]
+        },
+        {
+          "name": "period_type",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["mensal", "trimestral", "semestral", "anual"]
+        },
+        {
+          "name": "start_date",
+          "type": "date",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "end_date",
+          "type": "date",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "target_value",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "current_value",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["em_andamento", "concluida", "cancelada"]
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_goals_company_status ON goals (company_id, status)",
+        "CREATE INDEX idx_goals_company_dates ON goals (company_id, start_date, end_date)"
+      ]
+    },
+    {
+      "name": "agenda_events",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "view": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "create": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "update": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "delete": "@request.auth.id != '' && company_id.user_id = @request.auth.id"
+      },
+      "fields": [
+        {
+          "name": "company_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "companies"
+        },
+        {
+          "name": "title",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "event_type",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["Pedido", "Entrega", "Outro"]
+        },
+        {
+          "name": "customer_id",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "customers"
+        },
+        {
+          "name": "event_date",
+          "type": "date",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "event_time",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "amount",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["pendente", "em_andamento", "concluido", "cancelado"]
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_agenda_company_date ON agenda_events (company_id, event_date)",
+        "CREATE INDEX idx_agenda_company_status ON agenda_events (company_id, status)"
       ]
     }
   ]
