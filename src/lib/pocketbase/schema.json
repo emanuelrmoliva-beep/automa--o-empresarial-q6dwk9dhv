@@ -1,0 +1,852 @@
+{
+  "generatedAt": "2026-10-03T21:33:01.632Z",
+  "collections": [
+    {
+      "name": "users",
+      "type": "auth",
+      "apiRules": {
+        "list": "id = @request.auth.id",
+        "view": "id = @request.auth.id",
+        "create": "",
+        "update": "id = @request.auth.id",
+        "delete": "id = @request.auth.id"
+      },
+      "fields": [
+        {
+          "name": "name",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "avatar",
+          "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX `idx_tokenKey__pb_users_auth_` ON `users` (`tokenKey`)",
+        "CREATE UNIQUE INDEX `idx_email__pb_users_auth_` ON `users` (`email`) WHERE `email` != ''"
+      ]
+    },
+    {
+      "name": "companies",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && user_id = @request.auth.id",
+        "view": "@request.auth.id != '' && user_id = @request.auth.id",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != '' && user_id = @request.auth.id",
+        "delete": "@request.auth.id != '' && user_id = @request.auth.id"
+      },
+      "fields": [
+        {
+          "name": "user_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "legal_name",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "trade_name",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "cnpj",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "foundation_date",
+          "type": "date",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "business_activity",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": [
+            "Comércio",
+            "Serviços",
+            "Indústria",
+            "Restaurante/Alimentação",
+            "Tecnologia",
+            "Construção",
+            "Vestuário",
+            "Outros"
+          ]
+        },
+        {
+          "name": "business_activity_other",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "zip_code",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "address",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "number",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "complement",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "district",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "city",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "state",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": [
+            "AC",
+            "AL",
+            "AP",
+            "AM",
+            "BA",
+            "CE",
+            "DF",
+            "ES",
+            "GO",
+            "MA",
+            "MT",
+            "MS",
+            "MG",
+            "PA",
+            "PB",
+            "PR",
+            "PE",
+            "PI",
+            "RJ",
+            "RN",
+            "RS",
+            "RO",
+            "RR",
+            "SC",
+            "SP",
+            "SE",
+            "TO"
+          ]
+        },
+        {
+          "name": "phone",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "contact_email",
+          "type": "email",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX idx_companies_user ON companies (user_id)",
+        "CREATE UNIQUE INDEX idx_companies_cnpj ON companies (cnpj)",
+        "CREATE INDEX idx_companies_city_state ON companies (city, state)"
+      ]
+    },
+    {
+      "name": "products",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "view": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "create": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "update": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "delete": "@request.auth.id != '' && company_id.user_id = @request.auth.id"
+      },
+      "fields": [
+        {
+          "name": "company_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "companies"
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "sku",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "category",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["Produtos", "Alimentos", "Bebidas", "Vestuário", "Serviços", "Outros"]
+        },
+        {
+          "name": "cost_price",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "selling_price",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "quantity",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "min_stock",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_products_company ON products (company_id)",
+        "CREATE INDEX idx_products_company_sku ON products (company_id, sku)",
+        "CREATE INDEX idx_products_category ON products (category)"
+      ]
+    },
+    {
+      "name": "customers",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "view": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "create": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "update": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "delete": "@request.auth.id != '' && company_id.user_id = @request.auth.id"
+      },
+      "fields": [
+        {
+          "name": "company_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "companies"
+        },
+        {
+          "name": "client_type",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["Pessoa Jurídica", "Pessoa Física"]
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "document",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "email",
+          "type": "email",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "phone",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "address",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_customers_company ON customers (company_id)",
+        "CREATE INDEX idx_customers_document ON customers (document)"
+      ]
+    },
+    {
+      "name": "sales",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "view": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "create": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "update": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "delete": "@request.auth.id != '' && company_id.user_id = @request.auth.id"
+      },
+      "fields": [
+        {
+          "name": "company_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "companies"
+        },
+        {
+          "name": "customer_id",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "customers"
+        },
+        {
+          "name": "sale_date",
+          "type": "date",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "amount",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["Concluída", "Pendente", "Cancelada"]
+        },
+        {
+          "name": "payment_method",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["À vista", "Pix", "Cartão", "Boleto", "Transferência"]
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_sales_company_date ON sales (company_id, sale_date DESC)",
+        "CREATE INDEX idx_sales_status ON sales (status)"
+      ]
+    },
+    {
+      "name": "entries",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "view": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "create": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "update": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "delete": "@request.auth.id != '' && company_id.user_id = @request.auth.id"
+      },
+      "fields": [
+        {
+          "name": "company_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "companies"
+        },
+        {
+          "name": "entry_date",
+          "type": "date",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "category",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["Venda", "Serviço", "Investimento", "Outros"]
+        },
+        {
+          "name": "source",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "amount",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["Recebida", "Pendente"]
+        },
+        {
+          "name": "payment_method",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["À vista", "Pix", "Cartão", "Boleto", "Transferência"]
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_entries_company_date ON entries (company_id, entry_date DESC)",
+        "CREATE INDEX idx_entries_status ON entries (status)"
+      ]
+    },
+    {
+      "name": "expenses",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "view": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "create": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "update": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "delete": "@request.auth.id != '' && company_id.user_id = @request.auth.id"
+      },
+      "fields": [
+        {
+          "name": "company_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "companies"
+        },
+        {
+          "name": "expense_date",
+          "type": "date",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "category",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": [
+            "Aluguel",
+            "Salários",
+            "Impostos",
+            "Fornecedores",
+            "Transporte",
+            "Marketing",
+            "Utilidades",
+            "Outros"
+          ]
+        },
+        {
+          "name": "amount",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["Paga", "Pendente"]
+        },
+        {
+          "name": "payment_method",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["À vista", "Pix", "Cartão", "Boleto", "Transferência"]
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_expenses_company_date ON expenses (company_id, expense_date DESC)",
+        "CREATE INDEX idx_expenses_status ON expenses (status)"
+      ]
+    },
+    {
+      "name": "payables",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "view": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "create": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "update": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "delete": "@request.auth.id != '' && company_id.user_id = @request.auth.id"
+      },
+      "fields": [
+        {
+          "name": "company_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "companies"
+        },
+        {
+          "name": "due_date",
+          "type": "date",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "supplier",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "amount",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["Em aberto", "Pago"]
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_payables_company_due ON payables (company_id, due_date ASC)",
+        "CREATE INDEX idx_payables_status ON payables (status)"
+      ]
+    },
+    {
+      "name": "receivables",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "view": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "create": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "update": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "delete": "@request.auth.id != '' && company_id.user_id = @request.auth.id"
+      },
+      "fields": [
+        {
+          "name": "company_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "companies"
+        },
+        {
+          "name": "due_date",
+          "type": "date",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "client_id",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "customers"
+        },
+        {
+          "name": "amount",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["Em aberto", "Recebida"]
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_receivables_company_due ON receivables (company_id, due_date ASC)",
+        "CREATE INDEX idx_receivables_status ON receivables (status)"
+      ]
+    },
+    {
+      "name": "movements",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "view": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "create": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "update": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "delete": "@request.auth.id != '' && company_id.user_id = @request.auth.id"
+      },
+      "fields": [
+        {
+          "name": "company_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "companies"
+        },
+        {
+          "name": "movement_date",
+          "type": "date",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "type",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["entrada", "saída"]
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "category",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "amount",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "reference",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_movements_company_date ON movements (company_id, movement_date DESC)",
+        "CREATE INDEX idx_movements_type ON movements (type)",
+        "CREATE INDEX idx_movements_reference ON movements (company_id, reference)"
+      ]
+    }
+  ]
+}
