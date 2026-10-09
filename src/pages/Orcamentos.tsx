@@ -30,7 +30,7 @@ import {
   getProducts,
   createSale,
 } from '@/services/erp'
-import type { Quote, QuoteItem, Customer, Product } from '@/types/erp'
+import type { Quote, QuoteItem, Customer, Product, SaleItem } from '@/types/erp'
 import { formatCurrency, formatDatePtBr } from '@/lib/formatters'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -278,6 +278,14 @@ export function Orcamentos() {
     if (!company) return
     if (!confirm(`Deseja converter o orçamento "${quote.title}" em uma Venda concluída?`)) return
     try {
+      const saleItems: SaleItem[] = (quote.items || []).map((it) => ({
+        product_id: it.product_id || '',
+        name: it.name,
+        quantity: it.quantity,
+        unit_price: it.unit_price,
+        total: it.total,
+      }))
+
       await createSale({
         company_id: company.id,
         customer_id: quote.customer_id,
@@ -286,6 +294,7 @@ export function Orcamentos() {
         amount: quote.total_amount,
         payment_method: 'Pix',
         status: 'Concluída',
+        items: saleItems,
       })
 
       await updateQuote(quote.id, { status: 'Convertido' })

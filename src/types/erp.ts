@@ -57,6 +57,8 @@ export interface SaleItem {
   quantity: number
   unit_price: number
   total: number
+  batch_id?: string
+  batch_number?: string
 }
 
 export interface Sale {
@@ -329,4 +331,46 @@ export interface LoyaltyTier {
   discount_percent?: number
   created: string
   updated: string
+}
+
+export type ProductionBatchStatus = 'aberto' | 'finalizado'
+
+export interface ProductionBatchItem {
+  id: string
+  company_id: string
+  batch_id: string
+  product_id?: string
+  item_name: string
+  grammage_type?: string
+  grammage_value?: number
+  supplier_batch_number?: string
+  manufacture_date?: string
+  quantity_used: number
+  unit_measure?: string
+  notes?: string
+  attachments?: string[]
+  created: string
+  updated: string
+  expand?: {
+    product_id?: Product
+    batch_id?: ProductionBatch
+  }
+}
+
+export interface ProductionBatch {
+  id: string
+  company_id: string
+  batch_number: string
+  production_date: string
+  product_id?: string
+  product_name?: string
+  quantity_produced?: number
+  status: ProductionBatchStatus
+  notes?: string
+  created: string
+  updated: string
+  items?: ProductionBatchItem[]
+  expand?: {
+    product_id?: Product
+  }
 }

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-03T23:19:04.539Z",
+  "generatedAt": "2026-10-09T09:15:35.319Z",
   "collections": [
     {
       "name": "users",
@@ -1456,6 +1456,195 @@
       ],
       "indexes": [
         "CREATE INDEX idx_loyalty_company_order ON loyalty_tiers (company_id, tier_order ASC)"
+      ]
+    },
+    {
+      "name": "production_batches",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "view": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "create": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "update": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "delete": "@request.auth.id != '' && company_id.user_id = @request.auth.id"
+      },
+      "fields": [
+        {
+          "name": "company_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "companies"
+        },
+        {
+          "name": "batch_number",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "production_date",
+          "type": "date",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "product_id",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "products"
+        },
+        {
+          "name": "product_name",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "quantity_produced",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["aberto", "finalizado"]
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_batches_company_number ON production_batches (company_id, batch_number)",
+        "CREATE INDEX idx_batches_company_date ON production_batches (company_id, production_date DESC)"
+      ]
+    },
+    {
+      "name": "production_batch_items",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "view": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "create": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "update": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "delete": "@request.auth.id != '' && company_id.user_id = @request.auth.id"
+      },
+      "fields": [
+        {
+          "name": "company_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "companies"
+        },
+        {
+          "name": "batch_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "production_batches"
+        },
+        {
+          "name": "product_id",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "products"
+        },
+        {
+          "name": "item_name",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "grammage_type",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "grammage_value",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "supplier_batch_number",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "manufacture_date",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "quantity_used",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "unit_measure",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "attachments",
+          "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_batch_items_batch ON production_batch_items (batch_id)",
+        "CREATE INDEX idx_batch_items_company ON production_batch_items (company_id)",
+        "CREATE INDEX idx_batch_items_supplier_batch ON production_batch_items (company_id, supplier_batch_number)"
       ]
     }
   ]

@@ -22,6 +22,8 @@ import {
   deleteSale,
   getCustomers,
   getProducts,
+  getProductionBatches,
+  getProductionBatchItems,
   createMovement,
 } from '@/services/erp'
 import {
@@ -29,7 +31,15 @@ import {
   applyStockDeltas,
   validateStockAvailability,
 } from '@/services/stockSync'
-import type { Sale, Customer, Product, SaleItem } from '@/types/erp'
+import type {
+  Sale,
+  Customer,
+  Product,
+  SaleItem,
+  ProductionBatch,
+  ProductionBatchItem,
+} from '@/types/erp'
+import { BatchDetailModal } from '@/components/BatchDetailModal'
 import { formatCurrency, formatDatePtBr } from '@/lib/formatters'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -59,6 +69,7 @@ export const Vendas: React.FC = () => {
   const [sales, setSales] = useState<Sale[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
   const [products, setProducts] = useState<Product[]>([])
+  const [productionBatches, setProductionBatches] = useState<ProductionBatch[]>([])
   const [loading, setLoading] = useState(true)
 
   // Filtros
@@ -81,24 +92,32 @@ export const Vendas: React.FC = () => {
 
   // Itens da venda vinculados ao estoque
   const [saleItems, setSaleItems] = useState<SaleItem[]>([])
-  const [selectedProductId, setSelectedProductId] = useState('')
-  const [selectedProductQty, setSelectedProductQty] = useState('1')
+  const [selectedProductId, setSelectedProductId] = useState<string>('')
+  const [selectedProductBatch, setSelectedProductBatch] = useState<string>('')
+  const [selectedProductQty, setSelectedProductQty] = useState<string>('1')
   const [stockWarning, setStockWarning] = useState<string | null>(null)
 
+  // Modal de Ficha Completa do Lote ao clicar no lote
+  const [inspectedBatch, setInspectedBatch] = useState<
+    (ProductionBatch & { items?: ProductionBatchItem[] }) | null
+  >(null)
+  const [isBatchModalOpen, setIsBatchModalOpen] = useState(false)
   // Modal confirmação exclusão
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
 
   const loadData = useCallback(async () => {
     if (!company) return
     try {
-      const [salesData, custData, prodData] = await Promise.all([
+      const [salesData, custData, prodData, batchesData] = await Promise.all([
         getSales(company.id),
         getCustomers(company.id),
         getProducts(company.id),
+        getProductionBatches(company.id).catch(() => [] as ProductionBatch[]),
       ])
       setSales(salesData)
       setCustomers(custData)
       setProducts(prodData)
+      setProductionBatches(batchesData)
     } catch (err) {
       console.error(err)
     } finally {
@@ -124,6 +143,7 @@ export const Vendas: React.FC = () => {
     setPaymentMethod('Pix')
     setSaleItems([])
     setSelectedProductId('')
+    setSelectedProductBatch('')
     setSelectedProductQty('1')
     setStockWarning(null)
     setIsModalOpen(true)
@@ -140,6 +160,7 @@ export const Vendas: React.FC = () => {
     setPaymentMethod(sale.payment_method || 'Pix')
     setSaleItems(Array.isArray(sale.items) ? sale.items : [])
     setSelectedProductId('')
+    setSelectedProductBatch('')
     setSelectedProductQty('1')
     setStockWarning(null)
     setIsModalOpen(true)
@@ -181,13 +202,17 @@ export const Vendas: React.FC = () => {
     setStockWarning(null)
 
     let updatedList: SaleItem[]
-    if (existingIndex >= 0) {
+    const chosenBatchObj = productionBatches.find((b) => b.batch_number === selectedProductBatch)
+
+    if (existingIndex >= 0 && saleItems[existingIndex].batch_number === selectedProductBatch) {
       updatedList = [...saleItems]
       const updatedQty = updatedList[existingIndex].quantity + qty
       updatedList[existingIndex] = {
         ...updatedList[existingIndex],
         quantity: updatedQty,
         total: updatedQty * updatedList[existingIndex].unit_price,
+        batch_id: chosenBatchObj?.id,
+        batch_number: selectedProductBatch || undefined,
       }
     } else {
       const newItem: SaleItem = {
@@ -197,6 +222,8 @@ export const Vendas: React.FC = () => {
         quantity: qty,
         unit_price: prod.selling_price,
         total: qty * prod.selling_price,
+        batch_id: chosenBatchObj?.id,
+        batch_number: selectedProductBatch || undefined,
       }
       updatedList = [...saleItems, newItem]
     }
@@ -214,7 +241,35 @@ export const Vendas: React.FC = () => {
     }
 
     setSelectedProductId('')
+    setSelectedProductBatch('')
     setSelectedProductQty('1')
+  }
+
+  // Abrir Ficha do Lote pelo número do lote ou id
+  const handleOpenBatchDetails = async (batchNumberOrId: string) => {
+    let found = productionBatches.find(
+      (b) => b.id === batchNumberOrId || b.batch_number === batchNumberOrId,
+    )
+    if (!found && company) {
+      const list = await getProductionBatches(company.id).catch(() => [])
+      found = list.find((b) => b.id === batchNumberOrId || b.batch_number === batchNumberOrId)
+    }
+    if (!found) {
+      toast({
+        title: 'Lote não localizado',
+        description: `Não encontramos os dados de produção para o lote ${batchNumberOrId}.`,
+      })
+      return
+    }
+
+    try {
+      const items = await getProductionBatchItems(found.id)
+      setInspectedBatch({ ...found, items })
+      setIsBatchModalOpen(true)
+    } catch {
+      setInspectedBatch({ ...found, items: [] })
+      setIsBatchModalOpen(true)
+    }
   }
 
   const handleRemoveProductItem = (productId: string) => {
@@ -615,8 +670,20 @@ export const Vendas: React.FC = () => {
                     </span>
                     <ul className="list-disc list-inside text-slate-500 text-[10px] space-y-0.5">
                       {sale.items.map((it, idx) => (
-                        <li key={idx}>
-                          {it.quantity}x {it.name} ({formatCurrency(it.unit_price)})
+                        <li key={idx} className="flex items-center gap-1.5 flex-wrap">
+                          <span>
+                            {it.quantity}x {it.name} ({formatCurrency(it.unit_price)})
+                          </span>
+                          {it.batch_number && (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenBatchDetails(it.batch_number!)}
+                              className="inline-flex items-center gap-0.5 text-[9px] font-mono font-bold bg-teal-50 text-teal-800 hover:bg-teal-100 border border-teal-200 px-1.5 py-0.2 rounded"
+                              title="Ver ficha de rastreabilidade do lote"
+                            >
+                              Lote: {it.batch_number}
+                            </button>
+                          )}
                         </li>
                       ))}
                     </ul>
@@ -690,12 +757,27 @@ export const Vendas: React.FC = () => {
                           'Cliente Avulso'
                         )}
                       </td>
-                      <td className="py-3 px-4 text-slate-600 max-w-[220px]">
+                      <td className="py-3 px-4 text-slate-600 max-w-[240px]">
                         <p className="truncate font-medium">{sale.description}</p>
                         {Array.isArray(sale.items) && sale.items.length > 0 && (
-                          <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded font-mono">
-                            <Package className="w-2.5 h-2.5" /> {sale.items.length} item(ns)
-                          </span>
+                          <div className="flex items-center gap-1 flex-wrap mt-0.5">
+                            <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded font-mono">
+                              <Package className="w-2.5 h-2.5" /> {sale.items.length} item(ns)
+                            </span>
+                            {sale.items
+                              .filter((it) => it.batch_number)
+                              .map((it, bIdx) => (
+                                <button
+                                  key={bIdx}
+                                  type="button"
+                                  onClick={() => handleOpenBatchDetails(it.batch_number!)}
+                                  className="inline-flex items-center text-[10px] font-mono font-bold bg-teal-50 text-teal-800 hover:bg-teal-100 border border-teal-200 px-1.5 py-0.2 rounded"
+                                  title="Clique para abrir a ficha completa do lote de produção"
+                                >
+                                  Lote: {it.batch_number}
+                                </button>
+                              ))}
+                          </div>
                         )}
                       </td>
                       <td className="py-3 px-4 text-slate-500">{sale.payment_method || '-'}</td>
@@ -844,6 +926,32 @@ export const Vendas: React.FC = () => {
                   </Select>
                 </div>
 
+                {/* Seletor de Lote do Produto (Rastreabilidade) */}
+                {selectedProductId && (
+                  <div className="w-full sm:w-44">
+                    <Select
+                      value={selectedProductBatch}
+                      onValueChange={(val) =>
+                        setSelectedProductBatch(val === 'sem_lote' ? '' : val)
+                      }
+                    >
+                      <SelectTrigger className="h-9 text-xs bg-white">
+                        <SelectValue placeholder="Lote do produto..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="sem_lote">Sem Lote Especificado</SelectItem>
+                        {productionBatches
+                          .filter((b) => !b.product_id || b.product_id === selectedProductId)
+                          .map((b) => (
+                            <SelectItem key={b.id} value={b.batch_number}>
+                              Lote: {b.batch_number}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
                 <div className="flex items-center gap-2">
                   <Input
                     type="number"
@@ -871,13 +979,20 @@ export const Vendas: React.FC = () => {
                     Itens incluídos nesta venda:
                   </span>
                   <div className="space-y-1 max-h-36 overflow-y-auto">
-                    {saleItems.map((item) => (
+                    {saleItems.map((item, itIndex) => (
                       <div
-                        key={item.product_id}
+                        key={`${item.product_id}-${itIndex}`}
                         className="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs"
                       >
                         <div className="min-w-0">
-                          <p className="font-semibold text-slate-800 truncate">{item.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold text-slate-800 truncate">{item.name}</p>
+                            {item.batch_number && (
+                              <span className="text-[10px] font-mono bg-teal-50 text-teal-800 border border-teal-200 px-1 rounded">
+                                LOTE: {item.batch_number}
+                              </span>
+                            )}
+                          </div>
                           <p className="text-[10px] text-slate-400 font-mono">
                             {item.quantity} un x {formatCurrency(item.unit_price)} ={' '}
                             <strong className="text-slate-700">{formatCurrency(item.total)}</strong>
@@ -976,6 +1091,14 @@ export const Vendas: React.FC = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Modal Ficha Completa do Lote ao Clicar na Venda */}
+      <BatchDetailModal
+        batch={inspectedBatch}
+        isOpen={isBatchModalOpen}
+        onClose={() => setIsBatchModalOpen(false)}
+        company={company}
+      />
 
       {/* Confirmação de exclusão */}
       <Dialog open={!!deleteTargetId} onOpenChange={() => setDeleteTargetId(null)}>

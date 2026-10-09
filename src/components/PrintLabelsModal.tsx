@@ -12,7 +12,8 @@ import {
   Sparkles,
   Info,
 } from 'lucide-react'
-import type { Product, Company } from '@/types/erp'
+import type { Product, Company, ProductionBatch } from '@/types/erp'
+import { getProductionBatches } from '@/services/erp'
 import { formatCurrency } from '@/lib/formatters'
 import { renderBarcodeToCanvas, getProductBarcodeValue } from '@/services/barcode'
 import { downloadPriceLabelsPdf, type LabelItem } from '@/services/labelPdf'
@@ -44,10 +45,21 @@ export const PrintLabelsModal: React.FC<PrintLabelsModalProps> = ({
 }) => {
   const { toast } = useToast()
   const [selectedItems, setSelectedItems] = useState<{ [productId: string]: number }>({})
+  const [selectedBatches, setSelectedBatches] = useState<{ [productId: string]: string }>({})
+  const [productionBatches, setProductionBatches] = useState<ProductionBatch[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
   const [drawBorders, setDrawBorders] = useState(true)
   const [defaultCopies, setDefaultCopies] = useState('1')
   const previewCanvasRef = useRef<HTMLCanvasElement | null>(null)
+
+  // Carregar lotes de produção da empresa para permitir vincular número de lote na etiqueta
+  useEffect(() => {
+    if (isOpen && company) {
+      getProductionBatches(company.id)
+        .then((batches) => setProductionBatches(batches))
+        .catch(() => setProductionBatches([]))
+    }
+  }, [isOpen, company])
 
   // Quando o modal abre ou initialProducts muda, inicializa as quantidades
   useEffect(() => {
@@ -159,10 +171,12 @@ export const PrintLabelsModal: React.FC<PrintLabelsModalProps> = ({
       const productsPool = allAvailableProducts.length > 0 ? allAvailableProducts : initialProducts
       productsPool.forEach((p) => {
         const qty = selectedItems[p.id]
+        const batchNum = selectedBatches[p.id] || undefined
         if (qty && qty > 0) {
           itemsToPrint.push({
             product: p,
             copies: qty,
+            batchNumber: batchNum,
           })
         }
       })
@@ -242,9 +256,19 @@ export const PrintLabelsModal: React.FC<PrintLabelsModalProps> = ({
                   {firstProduct.name}
                 </div>
 
-                {/* Preço de venda destacado */}
+                {/* Preço de venda destacado e Lote */}
                 <div className="flex items-baseline justify-between px-1 bg-emerald-50/70 rounded py-0.5 border border-emerald-100">
-                  <span className="text-[9px] font-semibold text-slate-500 uppercase">Preço</span>
+                  <div className="text-left">
+                    {selectedBatches[firstProduct.id] ? (
+                      <span className="text-[9px] font-bold text-teal-700 block">
+                        LOTE: {selectedBatches[firstProduct.id]}
+                      </span>
+                    ) : (
+                      <span className="text-[9px] font-semibold text-slate-500 uppercase">
+                        Preço
+                      </span>
+                    )}
+                  </div>
                   <span className="text-sm font-extrabold text-emerald-700 font-mono">
                     {formatCurrency(firstProduct.selling_price || 0)}
                   </span>
@@ -340,10 +364,16 @@ export const PrintLabelsModal: React.FC<PrintLabelsModalProps> = ({
                   const qty = selectedItems[p.id] || 0
                   const barcodeValue = getProductBarcodeValue(p)
 
+                  // Lotes associados a este produto (ou sem produto específico mas da mesma empresa)
+                  const matchingBatches = productionBatches.filter(
+                    (b) => !b.product_id || b.product_id === p.id,
+                  )
+                  const currentBatch = selectedBatches[p.id] || ''
+
                   return (
                     <div
                       key={p.id}
-                      className="p-2.5 sm:px-3.5 flex items-center justify-between gap-3 hover:bg-slate-50/80 transition"
+                      className="p-2.5 sm:px-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/80 transition"
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
@@ -361,6 +391,33 @@ export const PrintLabelsModal: React.FC<PrintLabelsModalProps> = ({
                           <span>•</span>
                           <span>Estoque atual: {p.quantity} un.</span>
                         </div>
+
+                        {/* Seletor de Lote para a etiqueta */}
+                        {matchingBatches.length > 0 && (
+                          <div className="mt-1.5 flex items-center gap-2">
+                            <span className="text-[10px] font-semibold text-slate-500">
+                              Lote na etiqueta:
+                            </span>
+                            <select
+                              value={currentBatch}
+                              onChange={(e) => {
+                                const val = e.target.value
+                                setSelectedBatches((prev) => ({
+                                  ...prev,
+                                  [p.id]: val,
+                                }))
+                              }}
+                              className="text-[11px] h-6 px-2 border border-slate-200 rounded bg-white text-slate-800 font-mono focus:outline-emerald-600"
+                            >
+                              <option value="">Sem lote (Padrão)</option>
+                              {matchingBatches.map((b) => (
+                                <option key={b.id} value={b.batch_number}>
+                                  {b.batch_number} {b.product_name ? `(${b.product_name})` : ''}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
                       </div>
 
                       {/* Controle de cópias */}

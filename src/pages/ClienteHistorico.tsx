@@ -32,7 +32,14 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGri
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
 import { useRealtime } from '@/hooks/use-realtime'
-import { getCustomerHistory, type CustomerHistoryData } from '@/services/erp'
+import {
+  getCustomerHistory,
+  getProductionBatches,
+  getProductionBatchItems,
+  type CustomerHistoryData,
+} from '@/services/erp'
+import type { ProductionBatch, ProductionBatchItem } from '@/types/erp'
+import { BatchDetailModal } from '@/components/BatchDetailModal'
 import { formatCurrency, formatDatePtBr } from '@/lib/formatters'
 import {
   calculateCustomerMetrics,
@@ -72,6 +79,12 @@ export const ClienteHistorico: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<CustomerHistoryData | null>(null)
 
+  // Modal de Ficha do Lote
+  const [inspectedBatch, setInspectedBatch] = useState<
+    (ProductionBatch & { items?: ProductionBatchItem[] }) | null
+  >(null)
+  const [isBatchModalOpen, setIsBatchModalOpen] = useState(false)
+
   // Filtros
   const [activeTab, setActiveTab] = useState<ActiveTab>('timeline')
   const [period, setPeriod] = useState<PeriodFilter>('all')
@@ -108,6 +121,30 @@ export const ClienteHistorico: React.FC = () => {
 
   const customer = data?.customer
   const loyaltyTiers = data?.loyaltyTiers || []
+
+  const handleOpenBatchDetails = async (batchNumberOrId: string) => {
+    if (!company) return
+    try {
+      const list = await getProductionBatches(company.id)
+      const found = list.find((b) => b.id === batchNumberOrId || b.batch_number === batchNumberOrId)
+      if (!found) {
+        toast({
+          title: 'Lote não localizado',
+          description: `Não encontramos os dados de produção para o lote ${batchNumberOrId}.`,
+        })
+        return
+      }
+      const items = await getProductionBatchItems(found.id).catch(() => [])
+      setInspectedBatch({ ...found, items })
+      setIsBatchModalOpen(true)
+    } catch (err: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao carregar lote',
+        description: err?.message,
+      })
+    }
+  }
 
   // Avaliação de Fidelidade do Cliente Atual
   const loyaltyEval = useMemo(() => {
@@ -303,10 +340,22 @@ export const ClienteHistorico: React.FC = () => {
               </span>
               <ul className="divide-y divide-slate-100 text-[11px] text-slate-600">
                 {s.items.map((it, idx) => (
-                  <li key={idx} className="py-1 flex items-center justify-between">
-                    <span>
-                      {it.quantity}x {it.name}
-                    </span>
+                  <li key={idx} className="py-1 flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span>
+                        {it.quantity}x {it.name}
+                      </span>
+                      {it.batch_number && (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenBatchDetails(it.batch_number!)}
+                          className="inline-flex items-center text-[9px] font-mono font-bold bg-teal-50 text-teal-800 hover:bg-teal-100 border border-teal-200 px-1.5 py-0.2 rounded"
+                          title="Clique para abrir a ficha completa do lote"
+                        >
+                          Lote: {it.batch_number}
+                        </button>
+                      )}
+                    </div>
                     <span className="font-mono font-medium">{formatCurrency(it.total)}</span>
                   </li>
                 ))}
@@ -1091,9 +1140,24 @@ export const ClienteHistorico: React.FC = () => {
                           <td className="py-3 px-4 text-slate-700 max-w-sm">
                             <p className="font-semibold text-slate-900">{sale.description}</p>
                             {Array.isArray(sale.items) && sale.items.length > 0 && (
-                              <p className="text-[11px] text-slate-500 truncate mt-0.5">
-                                {sale.items.map((it) => `${it.quantity}x ${it.name}`).join(', ')}
-                              </p>
+                              <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                                <span className="text-[11px] text-slate-500 truncate">
+                                  {sale.items.map((it) => `${it.quantity}x ${it.name}`).join(', ')}
+                                </span>
+                                {sale.items
+                                  .filter((it) => it.batch_number)
+                                  .map((it, bIdx) => (
+                                    <button
+                                      key={bIdx}
+                                      type="button"
+                                      onClick={() => handleOpenBatchDetails(it.batch_number!)}
+                                      className="inline-flex items-center text-[10px] font-mono font-bold bg-teal-50 text-teal-800 hover:bg-teal-100 border border-teal-200 px-1.5 py-0.2 rounded"
+                                      title="Clique para abrir a ficha de rastreabilidade do lote de produção"
+                                    >
+                                      Lote: {it.batch_number}
+                                    </button>
+                                  ))}
+                              </div>
                             )}
                           </td>
                           <td className="py-3 px-4 text-slate-600 whitespace-nowrap">
@@ -1276,6 +1340,14 @@ export const ClienteHistorico: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Modal Ficha Completa do Lote */}
+      <BatchDetailModal
+        batch={inspectedBatch}
+        isOpen={isBatchModalOpen}
+        onClose={() => setIsBatchModalOpen(false)}
+        company={company}
+      />
     </div>
   )
 }

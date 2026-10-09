@@ -15,6 +15,8 @@ import type {
   Quote,
   SupplierQuote,
   LoyaltyTier,
+  ProductionBatch,
+  ProductionBatchItem,
 } from '@/types/erp'
 
 // PocketBase File URL helper
@@ -559,6 +561,7 @@ export interface FullCompanyBackup {
   goals: Goal[]
   agenda_events: AgendaEvent[]
   loyalty_tiers?: LoyaltyTier[]
+  production_batches?: (ProductionBatch & { items?: ProductionBatchItem[] })[]
 }
 
 export async function exportFullCompanyBackup(companyId: string): Promise<FullCompanyBackup> {
@@ -646,6 +649,22 @@ export async function exportFullCompanyBackup(companyId: string): Promise<FullCo
       }
     : null
 
+  const batches = await getProductionBatches(companyId).catch(() => [] as ProductionBatch[])
+  const enrichedBatches: (ProductionBatch & { items?: ProductionBatchItem[] })[] = []
+  for (const b of batches) {
+    const items = await getProductionBatchItems(b.id).catch(() => [] as ProductionBatchItem[])
+    const enrichedItems = items.map((it) => ({
+      ...it,
+      attachments_urls: (it.attachments || []).map((file) =>
+        getPbFileUrl('production_batch_items', it.id, file),
+      ),
+    }))
+    enrichedBatches.push({
+      ...b,
+      items: enrichedItems,
+    })
+  }
+
   const total =
     (customers.length || 0) +
     (products.length || 0) +
@@ -658,7 +677,8 @@ export async function exportFullCompanyBackup(companyId: string): Promise<FullCo
     (receivables.length || 0) +
     (movements.length || 0) +
     (goals.length || 0) +
-    (agenda_events.length || 0)
+    (agenda_events.length || 0) +
+    (enrichedBatches.length || 0)
 
   return {
     metadata: {
@@ -682,5 +702,78 @@ export async function exportFullCompanyBackup(companyId: string): Promise<FullCo
     goals,
     agenda_events,
     loyalty_tiers: await getLoyaltyTiers(companyId).catch(() => [] as LoyaltyTier[]),
+    production_batches: enrichedBatches,
   }
+}
+
+// -------------------------------------------------------------
+// CONTROLE DE PRODUÇÃO & RASTREABILIDADE DE LOTE
+// -------------------------------------------------------------
+
+export async function getProductionBatches(companyId: string): Promise<ProductionBatch[]> {
+  return await pb.collection('production_batches').getFullList<ProductionBatch>({
+    filter: `company_id = "${companyId}"`,
+    sort: '-production_date,-created',
+    expand: 'product_id',
+  })
+}
+
+export async function getProductionBatchById(id: string): Promise<ProductionBatch> {
+  return await pb.collection('production_batches').getOne<ProductionBatch>(id, {
+    expand: 'product_id',
+  })
+}
+
+export async function createProductionBatch(
+  data: Partial<ProductionBatch>,
+): Promise<ProductionBatch> {
+  return await pb.collection('production_batches').create<ProductionBatch>(data)
+}
+
+export async function updateProductionBatch(
+  id: string,
+  data: Partial<ProductionBatch>,
+): Promise<ProductionBatch> {
+  return await pb.collection('production_batches').update<ProductionBatch>(id, data)
+}
+
+export async function deleteProductionBatch(id: string): Promise<boolean> {
+  return await pb.collection('production_batches').delete(id)
+}
+
+export async function getProductionBatchItems(batchId: string): Promise<ProductionBatchItem[]> {
+  return await pb.collection('production_batch_items').getFullList<ProductionBatchItem>({
+    filter: `batch_id = "${batchId}"`,
+    sort: 'created',
+    expand: 'product_id',
+  })
+}
+
+export async function getAllProductionBatchItems(
+  companyId: string,
+): Promise<ProductionBatchItem[]> {
+  return await pb.collection('production_batch_items').getFullList<ProductionBatchItem>({
+    filter: `company_id = "${companyId}"`,
+    sort: '-created',
+    expand: 'product_id,batch_id',
+  })
+}
+
+export async function createProductionBatchItem(
+  formDataOrData: FormData | Partial<ProductionBatchItem>,
+): Promise<ProductionBatchItem> {
+  return await pb.collection('production_batch_items').create<ProductionBatchItem>(formDataOrData)
+}
+
+export async function updateProductionBatchItem(
+  id: string,
+  formDataOrData: FormData | Partial<ProductionBatchItem>,
+): Promise<ProductionBatchItem> {
+  return await pb
+    .collection('production_batch_items')
+    .update<ProductionBatchItem>(id, formDataOrData)
+}
+
+export async function deleteProductionBatchItem(id: string): Promise<boolean> {
+  return await pb.collection('production_batch_items').delete(id)
 }

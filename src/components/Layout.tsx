@@ -27,6 +27,7 @@ import {
   HelpCircle,
   Clock,
   Award,
+  Layers,
 } from 'lucide-react'
 import HelpModal from '@/components/HelpModal'
 import NotificationsDropdown from '@/components/NotificationsDropdown'
@@ -124,9 +125,10 @@ export const Layout: React.FC = () => {
       ],
     },
     {
-      label: 'Produtos & Compras',
+      label: 'Produtos & Produção',
       items: [
         { path: '/estoque', label: 'Estoque & Catálogo', icon: Package },
+        { path: '/producao', label: 'Controle de Produção', icon: Layers },
         { path: '/cotacoes', label: 'Cotações de Fornecedores', icon: Scale },
         { path: '/formacao-de-precos', label: 'Formação de Preços', icon: Calculator },
         { path: '/entradas-saidas', label: 'Entradas e Saídas', icon: History },
@@ -164,6 +166,7 @@ export const Layout: React.FC = () => {
     if (p.startsWith('/clientes')) return 'Cadastro de Clientes'
     if (p.startsWith('/fidelidade')) return 'Programa de Fidelidade & Faixas'
     if (p.startsWith('/estoque')) return 'Controle de Estoque & Catálogo'
+    if (p.startsWith('/producao')) return 'Controle de Produção & Rastreabilidade'
     if (p.startsWith('/formacao-de-precos')) return 'Formação de Preços & Markup'
     if (p.startsWith('/receitas')) return 'Receitas'
     if (p.startsWith('/despesas')) return 'Despesas'

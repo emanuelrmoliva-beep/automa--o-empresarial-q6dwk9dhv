@@ -23,6 +23,7 @@ import Clientes from '@/pages/Clientes'
 import ClienteHistorico from '@/pages/ClienteHistorico'
 import Fidelidade from '@/pages/Fidelidade'
 import Estoque from '@/pages/Estoque'
+import Producao from '@/pages/Producao'
 import FormacaoDePrecos from '@/pages/FormacaoDePrecos'
 import Receitas from '@/pages/Receitas'
 import Despesas from '@/pages/Despesas'
@@ -106,6 +107,7 @@ const App = () => (
             <Route path="/clientes/:id/historico" element={<ClienteHistorico />} />
             <Route path="/fidelidade" element={<Fidelidade />} />
             <Route path="/estoque" element={<Estoque />} />
+            <Route path="/producao" element={<Producao />} />
             <Route path="/formacao-de-precos" element={<FormacaoDePrecos />} />
             <Route path="/receitas" element={<Receitas />} />
             <Route path="/despesas" element={<Despesas />} />

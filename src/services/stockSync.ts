@@ -108,6 +108,70 @@ export function calculateStockDeltas(
 /**
  * Valida se os itens solicitados possuem estoque suficiente antes de efetivar a venda.
  */
+/**
+ * Aplica baixa ou devolução de estoque com base nos insumos do lote de produção.
+ * Se finalizado: deltaMap = Map<productId, quantityUsed> -> baixa no estoque.
+ * Se reaberto ou excluído: deltaMap = Map<productId, -quantityUsed> -> devolução ao estoque.
+ */
+export async function applyProductionBatchStockDeltas(
+  deltaMap: Map<string, number>,
+): Promise<{ success: boolean; errors: string[] }> {
+  return await applyStockDeltas(deltaMap)
+}
+
+/**
+ * Valida se os insumos de um lote de produção possuem estoque disponível suficiente.
+ */
+export async function validateProductionStockAvailability(
+  items: { product_id?: string; quantity_used: number; item_name?: string }[],
+  previousItems: { product_id?: string; quantity_used: number }[] = [],
+  isEdit = false,
+  previousStatus?: 'aberto' | 'finalizado',
+): Promise<{ valid: boolean; errorMessage?: string }> {
+  const requiredDeltas = new Map<string, number>()
+
+  for (const item of items) {
+    if (!item.product_id) continue
+    const qty = Number(item.quantity_used) || 0
+    requiredDeltas.set(item.product_id, (requiredDeltas.get(item.product_id) || 0) + qty)
+  }
+
+  // Se já estava finalizado na edição anterior, o consumo anterior conta a favor
+  if (isEdit && previousStatus === 'finalizado') {
+    for (const prevItem of previousItems) {
+      if (!prevItem.product_id) continue
+      const prevQty = Number(prevItem.quantity_used) || 0
+      requiredDeltas.set(
+        prevItem.product_id,
+        (requiredDeltas.get(prevItem.product_id) || 0) - prevQty,
+      )
+    }
+  }
+
+  for (const [productId, delta] of requiredDeltas.entries()) {
+    if (delta <= 0) continue
+
+    try {
+      const prodRecord = await pb.collection('products').getOne(productId)
+      const currentStock = Number(prodRecord.quantity) || 0
+
+      if (delta > currentStock) {
+        return {
+          valid: false,
+          errorMessage: `Estoque insuficiente de insumo: restam apenas ${currentStock} unidade(s) de "${prodRecord.name}" em estoque (solicitado no lote: ${delta}).`,
+        }
+      }
+    } catch (err: any) {
+      return {
+        valid: false,
+        errorMessage: `Erro ao consultar produto insumo: ${err?.message}`,
+      }
+    }
+  }
+
+  return { valid: true }
+}
+
 export async function validateStockAvailability(
   items: SaleItem[],
   previousItems: SaleItem[] = [],

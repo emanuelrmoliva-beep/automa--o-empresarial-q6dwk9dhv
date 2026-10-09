@@ -39,6 +39,85 @@ export const HELP_CATEGORIES = [
 
 export const HELP_TOPICS: HelpTopic[] = [
   {
+    id: 'controle-producao-lotes',
+    category: 'produtos',
+    categoryLabel: 'Produtos & Produção',
+    title: 'Controle de Produção & Rastreabilidade de Lote',
+    shortDescription:
+      'Abertura de lotes de fabricação com baixa automática de insumos no estoque, gramatura, lote do insumo, anexos de fotos, etiqueta com lote e vínculo com vendas.',
+    iconName: 'Layers',
+    route: '/producao',
+    badge: 'Novidade',
+    keywords: [
+      'produção',
+      'lote',
+      'rastreabilidade',
+      'insumos',
+      'gramatura',
+      'lote de fabricação',
+      'baixa de estoque',
+      'fotos',
+      'anexos',
+      'etiquetas',
+      'venda com lote',
+      'devolução',
+    ],
+    highlights: [
+      'Abertura de lote com número gerado automaticamente (ex: LOTE-2025-0001) e totalmente editável.',
+      'Cadastro de insumos utilizados puxando do estoque atual com baixa automática ao finalizar o lote.',
+      'Campos de gramatura e medidas (g/m², micras, mm, kg, etc.) e valor numérico.',
+      'Identificação do lote do fornecedor e data de fabricação de cada insumo.',
+      'Upload de arquivos e fotos por insumo (com miniatura e download).',
+      'Bloqueio com aviso caso a quantidade de insumos em estoque seja insuficiente.',
+      'Devolução automática ao estoque ao excluir ou editar o lote.',
+      'Etiqueta de código de barras atualizada com número do lote impresso.',
+      'Vínculo de lote de fabricação na venda com abertura da ficha completa do lote ao clicar.',
+    ],
+    steps: [
+      {
+        title: '1. Acessar o Controle de Produção',
+        description:
+          'No menu lateral, na seção "Produtos & Produção", clique em "Controle de Produção" (rota /producao).',
+      },
+      {
+        title: '2. Abrir um Novo Lote de Produção',
+        description:
+          'Clique no botão "+ Abertura de Lote". O sistema gera automaticamente um número sequencial editável (ex.: LOTE-2025-0001). Defina a data de produção, produto fabricado e quantidade.',
+        tip: 'O produto fabricado serve apenas como registro de rastreabilidade e não entra no estoque automaticamente, conforme regra do negócio.',
+      },
+      {
+        title: '3. Cadastrar os Insumos Utilizados',
+        description:
+          'Para cada insumo, você pode selecionar um item do estoque atual ou cadastrar avulso. Informe o tipo de gramatura/medida (ex.: g/m²), valor numérico, lote do insumo/fornecedor, data de fabricação, quantidade consumida e observações de individualização.',
+      },
+      {
+        title: '4. Anexar Fotos e Documentos aos Insumos',
+        description:
+          'Clique em "Anexar Arquivo/Foto" para enviar comprovantes, etiquetas da bobina ou certificados em PDF ou imagem. Os arquivos ficam salvos e acessíveis na ficha do lote.',
+      },
+      {
+        title: '5. Baixa Automática e Validação de Estoque',
+        description:
+          'Ao salvar o lote como "Finalizado", as quantidades de insumos vinculados ao estoque são imediatamente baixadas. Se não houver saldo suficiente, o sistema bloqueia e avisa com precisão.',
+      },
+      {
+        title: '6. Etiqueta com Número do Lote',
+        description:
+          'No módulo de Estoque, ao imprimir etiquetas de código de barras para um produto, você pode selecionar de qual lote puxar o número. O lote aparecerá destacado na etiqueta junto ao preço e código de barras.',
+      },
+      {
+        title: '7. Vincular Lote na Venda e Abrir Ficha Técnica',
+        description:
+          'Ao registrar uma venda comercial ou converter um orçamento, selecione o lote de origem para o produto vendido. Na lista de vendas e no histórico do cliente, clique na tag do lote para abrir instantaneamente a ficha técnica completa com todos os insumos e fotos.',
+      },
+      {
+        title: '8. Relatórios de Produção e Busca Completa',
+        description:
+          'Na aba "Relatórios & Busca", utilize a caixa de pesquisa para localizar qualquer lote buscando por número, nome de insumo, lote do fornecedor, gramatura ou observações, com exportação para planilha CSV.',
+      },
+    ],
+  },
+  {
     id: 'controle-pedidos-aberto',
     category: 'operacao',
     categoryLabel: 'Operação Diária',

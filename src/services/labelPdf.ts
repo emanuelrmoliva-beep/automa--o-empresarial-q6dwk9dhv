@@ -1,11 +1,13 @@
 import jsPDF from 'jspdf'
 import type { Product, Company } from '@/types/erp'
+import { getPbFileUrl } from './erp'
 import { formatCurrency } from '@/lib/formatters'
 import { generateBarcodeDataUrl, getProductBarcodeValue } from './barcode'
 
 export interface LabelItem {
   product: Product
   copies: number
+  batchNumber?: string
 }
 
 export interface LabelGridConfig {
@@ -119,11 +121,18 @@ export async function generatePriceLabelsPdf(
   const labelsPerPage = columns * rows
 
   // Flatten items em um array de produtos repetidos pelas cópias
-  const labelQueue: Product[] = []
+  interface FlattenedLabel {
+    product: Product
+    batchNumber?: string
+  }
+  const labelQueue: FlattenedLabel[] = []
   for (const it of items) {
     const qty = Math.max(0, it.copies || 0)
     for (let c = 0; c < qty; c++) {
-      labelQueue.push(it.product)
+      labelQueue.push({
+        product: it.product,
+        batchNumber: it.batchNumber,
+      })
     }
   }
 
@@ -135,9 +144,7 @@ export async function generatePriceLabelsPdf(
   let logoDataUrl: string | null = null
   if (company?.logo && typeof window !== 'undefined') {
     try {
-      const logoUrl = company.logo.startsWith('http')
-        ? company.logo
-        : `${window.location.origin}/api/files/companies/${company.id}/${company.logo}`
+      const logoUrl = getPbFileUrl('companies', company.id, company.logo)
       logoDataUrl = await loadLogoBase64(logoUrl)
     } catch {
       logoDataUrl = null
@@ -175,7 +182,9 @@ export async function generatePriceLabelsPdf(
       const x = marginLeft + colIndex * (labelWidth + colGap)
       const y = marginTop + rowIndex * (labelHeight + rowGap)
 
-      const product = labelQueue[currentItemIndex]
+      const queueItem = labelQueue[currentItemIndex]
+      const product = queueItem.product
+      const batchNumber = queueItem.batchNumber
       const barcodeValue = getProductBarcodeValue(product)
 
       // Se drawBorders estiver ativo, desenhar linha sutil tracejada para guiar o corte/destaque
@@ -189,56 +198,64 @@ export async function generatePriceLabelsPdf(
       }
 
       // 1. Cabeçalho da etiqueta: Logo da empresa ou Nome Fantasia reduzido
-      const headerY = y + 2.5
+      const headerY = y + 2.2
       let headerTextStartX = x + 2
       const maxHeaderWidth = labelWidth - 4
 
       if (logoDataUrl) {
         try {
-          const logoMaxW = 6.5
-          const logoMaxH = 3.5
-          doc.addImage(logoDataUrl, 'PNG', x + 2, y + 1.2, logoMaxW, logoMaxH, undefined, 'FAST')
-          headerTextStartX = x + 9.5
+          const logoMaxW = 6
+          const logoMaxH = 3.2
+          doc.addImage(logoDataUrl, 'PNG', x + 2, y + 1.0, logoMaxW, logoMaxH, undefined, 'FAST')
+          headerTextStartX = x + 8.8
         } catch {
           headerTextStartX = x + 2
         }
       }
 
       doc.setFont('helvetica', 'bold')
-      doc.setFontSize(5.5)
+      doc.setFontSize(5.2)
       doc.setTextColor(71, 85, 105) // slate-600
       const truncatedCompany =
         companyName.length > 22 ? companyName.slice(0, 20) + '…' : companyName
-      doc.text(truncatedCompany.toUpperCase(), headerTextStartX, headerY + 1.2, {
+      doc.text(truncatedCompany.toUpperCase(), headerTextStartX, headerY + 1.0, {
         maxWidth: maxHeaderWidth - (headerTextStartX - x),
       })
 
       // Linha sutil separadora abaixo do cabeçalho
       doc.setDrawColor(235, 240, 245)
       doc.setLineWidth(0.1)
-      doc.line(x + 2, y + 5.2, x + labelWidth - 2, y + 5.2)
+      doc.line(x + 2, y + 4.8, x + labelWidth - 2, y + 4.8)
 
-      // 2. Nome do Produto (até 2 linhas compactas)
+      // 2. Nome do Produto (compacto)
       doc.setFont('helvetica', 'bold')
-      doc.setFontSize(6.8)
+      doc.setFontSize(6.2)
       doc.setTextColor(15, 23, 42) // slate-900
 
-      const prodNameY = y + 7.6
+      const prodNameY = y + 7.0
       const splitName = doc.splitTextToSize(product.name, labelWidth - 4)
-      const visibleLines = splitName.slice(0, 2)
+      const maxTitleLines = batchNumber ? 1 : 2
+      const visibleLines = splitName.slice(0, maxTitleLines)
       doc.text(visibleLines, x + 2, prodNameY)
 
-      // 3. Preço de Venda em Real (R$) grande e destacado
-      const priceY = y + (visibleLines.length > 1 ? 13.6 : 12.8)
+      // 3. Preço de Venda e Número do Lote (se houver)
+      const priceY = y + (batchNumber ? 10.4 : visibleLines.length > 1 ? 12.8 : 11.8)
 
-      // Label "PREÇO" ou "R$"
-      doc.setFont('helvetica', 'normal')
-      doc.setFontSize(5.5)
-      doc.setTextColor(100, 116, 139)
-      doc.text('PREÇO', x + 2, priceY)
+      // Se houver número do lote, estampa o lote na descrição da etiqueta
+      if (batchNumber) {
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(4.8)
+        doc.setTextColor(15, 118, 110) // teal-700
+        doc.text(`LOTE: ${batchNumber}`, x + 2, priceY - 0.2)
+      } else {
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(5.0)
+        doc.setTextColor(100, 116, 139)
+        doc.text('PREÇO', x + 2, priceY)
+      }
 
       doc.setFont('helvetica', 'bold')
-      doc.setFontSize(10.5)
+      doc.setFontSize(9.5)
       doc.setTextColor(5, 150, 105) // emerald-600
       const formattedPrice = formatCurrency(product.selling_price || 0)
       doc.text(formattedPrice, x + labelWidth - 2, priceY, { align: 'right' })
@@ -249,14 +266,14 @@ export async function generatePriceLabelsPdf(
         barcodeImg = generateBarcodeDataUrl(barcodeValue, {
           width: 320,
           height: 65,
-          displayValue: false, // O valor em texto colocamos manualmente no PDF com tipografia nítida
+          displayValue: false,
         })
         barcodeCache.set(barcodeValue, barcodeImg)
       }
 
       const barcodeW = labelWidth - 4
-      const barcodeH = 5.8
-      const barcodeY = y + labelHeight - 8.8
+      const barcodeH = 5.6
+      const barcodeY = y + labelHeight - 8.6
 
       if (barcodeImg) {
         try {
@@ -268,7 +285,7 @@ export async function generatePriceLabelsPdf(
 
       // 5. SKU / Código legível abaixo do código de barras
       doc.setFont('courier', 'bold')
-      doc.setFontSize(5.5)
+      doc.setFontSize(5.2)
       doc.setTextColor(51, 65, 85) // slate-700
       const codeTextY = y + labelHeight - 1.2
       doc.text(barcodeValue, x + labelWidth / 2, codeTextY, { align: 'center' })
