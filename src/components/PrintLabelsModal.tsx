@@ -16,6 +16,7 @@ import type { Product, Company, ProductionBatch } from '@/types/erp'
 import { getProductionBatches } from '@/services/erp'
 import { formatCurrency } from '@/lib/formatters'
 import { renderBarcodeToCanvas, getProductBarcodeValue } from '@/services/barcode'
+import { renderQRCodeToCanvas } from '@/services/qrcode'
 import { downloadPriceLabelsPdf, type LabelItem } from '@/services/labelPdf'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -51,6 +52,7 @@ export const PrintLabelsModal: React.FC<PrintLabelsModalProps> = ({
   const [drawBorders, setDrawBorders] = useState(true)
   const [defaultCopies, setDefaultCopies] = useState('1')
   const previewCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const previewQrCanvasRef = useRef<HTMLCanvasElement | null>(null)
 
   // Carregar lotes de produção da empresa para permitir vincular número de lote na etiqueta
   useEffect(() => {
@@ -83,17 +85,31 @@ export const PrintLabelsModal: React.FC<PrintLabelsModalProps> = ({
   // Primeiro produto para exibição no Preview
   const firstProduct = activeProducts[0] || initialProducts[0]
 
-  // Renderizar o canvas de pré-visualização da etiqueta de exemplo
+  // Renderizar o canvas de pré-visualização da etiqueta de exemplo (código de barras + QR Code se houver)
   useEffect(() => {
-    if (!previewCanvasRef.current || !firstProduct) return
-    const code = getProductBarcodeValue(firstProduct)
-    renderBarcodeToCanvas(previewCanvasRef.current, code, {
-      width: 260,
-      height: 60,
-      displayValue: true,
-      fontSize: 12,
-    })
-  }, [firstProduct])
+    if (!firstProduct) return
+    const selectedBatchNum = selectedBatches[firstProduct.id]
+    const matchedBatch = productionBatches.find((b) => b.batch_number === selectedBatchNum)
+    const isPublicBatch = matchedBatch?.is_public && !!matchedBatch?.public_token
+
+    if (previewCanvasRef.current) {
+      const code = getProductBarcodeValue(firstProduct)
+      renderBarcodeToCanvas(previewCanvasRef.current, code, {
+        width: isPublicBatch ? 180 : 260,
+        height: 60,
+        displayValue: true,
+        fontSize: 12,
+      })
+    }
+
+    if (previewQrCanvasRef.current && isPublicBatch && matchedBatch?.public_token) {
+      const publicUrl = `${window.location.origin}/consulta-lote/${matchedBatch.public_token}`
+      renderQRCodeToCanvas(previewQrCanvasRef.current, publicUrl, {
+        size: 56,
+        margin: 1,
+      })
+    }
+  }, [firstProduct, selectedBatches, productionBatches])
 
   const handleSetAllCopies = (copies: number) => {
     const val = Math.max(1, copies)
@@ -172,11 +188,21 @@ export const PrintLabelsModal: React.FC<PrintLabelsModalProps> = ({
       productsPool.forEach((p) => {
         const qty = selectedItems[p.id]
         const batchNum = selectedBatches[p.id] || undefined
+        let qrUrl: string | undefined = undefined
+
+        if (batchNum) {
+          const matchedBatch = productionBatches.find((b) => b.batch_number === batchNum)
+          if (matchedBatch && matchedBatch.is_public && matchedBatch.public_token) {
+            qrUrl = `${window.location.origin}/consulta-lote/${matchedBatch.public_token}`
+          }
+        }
+
         if (qty && qty > 0) {
           itemsToPrint.push({
             product: p,
             copies: qty,
             batchNumber: batchNum,
+            qrCodeUrl: qrUrl,
           })
         }
       })
@@ -274,10 +300,28 @@ export const PrintLabelsModal: React.FC<PrintLabelsModalProps> = ({
                   </span>
                 </div>
 
-                {/* Canvas do Código de barras Code 128 */}
-                <div className="pt-0.5">
-                  <canvas ref={previewCanvasRef} className="w-full h-11 mx-auto bg-white" />
-                </div>
+                {/* Canvas do Código de barras Code 128 e QR Code */}
+                {(() => {
+                  const selBatchNum = selectedBatches[firstProduct.id]
+                  const matchedBatch = productionBatches.find((b) => b.batch_number === selBatchNum)
+                  const hasQr = matchedBatch?.is_public && !!matchedBatch?.public_token
+
+                  return (
+                    <div className="pt-0.5 flex items-center justify-between gap-2">
+                      <div className="flex-1">
+                        <canvas ref={previewCanvasRef} className="w-full h-11 mx-auto bg-white" />
+                      </div>
+                      {hasQr && (
+                        <div className="shrink-0 flex flex-col items-center bg-white p-0.5 rounded border border-slate-200">
+                          <canvas ref={previewQrCanvasRef} className="w-10 h-10" />
+                          <span className="text-[7px] text-emerald-700 font-bold uppercase mt-0.5">
+                            Ficha QR
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })()}
               </div>
             </div>
           )}
@@ -412,10 +456,24 @@ export const PrintLabelsModal: React.FC<PrintLabelsModalProps> = ({
                               <option value="">Sem lote (Padrão)</option>
                               {matchingBatches.map((b) => (
                                 <option key={b.id} value={b.batch_number}>
-                                  {b.batch_number} {b.product_name ? `(${b.product_name})` : ''}
+                                  {b.batch_number} {b.is_public ? '[Consulta Pública + QR]' : ''}{' '}
+                                  {b.product_name ? `(${b.product_name})` : ''}
                                 </option>
                               ))}
                             </select>
+                            {(() => {
+                              const b = matchingBatches.find(
+                                (item) => item.batch_number === currentBatch,
+                              )
+                              if (b?.is_public) {
+                                return (
+                                  <span className="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                                    QR Code ativo
+                                  </span>
+                                )
+                              }
+                              return null
+                            })()}
                           </div>
                         )}
                       </div>

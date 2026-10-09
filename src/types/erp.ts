@@ -347,6 +347,8 @@ export interface ProductionBatchItem {
   manufacture_date?: string
   quantity_used: number
   unit_measure?: string
+  unit_cost?: number
+  total_cost?: number
   notes?: string
   attachments?: string[]
   created: string
@@ -366,11 +368,15 @@ export interface ProductionBatch {
   product_name?: string
   quantity_produced?: number
   status: ProductionBatchStatus
+  total_cost?: number
+  is_public?: boolean
+  public_token?: string
   notes?: string
   created: string
   updated: string
   items?: ProductionBatchItem[]
   expand?: {
     product_id?: Product
+    company_id?: Company
   }
 }

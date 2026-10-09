@@ -3,11 +3,13 @@ import type { Product, Company } from '@/types/erp'
 import { getPbFileUrl } from './erp'
 import { formatCurrency } from '@/lib/formatters'
 import { generateBarcodeDataUrl, getProductBarcodeValue } from './barcode'
+import { generateQRCodeDataUrl } from './qrcode'
 
 export interface LabelItem {
   product: Product
   copies: number
   batchNumber?: string
+  qrCodeUrl?: string
 }
 
 export interface LabelGridConfig {
@@ -124,6 +126,7 @@ export async function generatePriceLabelsPdf(
   interface FlattenedLabel {
     product: Product
     batchNumber?: string
+    qrCodeUrl?: string
   }
   const labelQueue: FlattenedLabel[] = []
   for (const it of items) {
@@ -132,6 +135,7 @@ export async function generatePriceLabelsPdf(
       labelQueue.push({
         product: it.product,
         batchNumber: it.batchNumber,
+        qrCodeUrl: it.qrCodeUrl,
       })
     }
   }
@@ -151,8 +155,9 @@ export async function generatePriceLabelsPdf(
     }
   }
 
-  // Cache dos barcodes gerados para não recalcular o mesmo produto dezenas de vezes
+  // Cache dos barcodes e qrcodes gerados para não recalcular dezenas de vezes
   const barcodeCache = new Map<string, string>()
+  const qrCache = new Map<string, string>()
 
   const doc = new jsPDF({
     orientation: 'portrait',
@@ -185,6 +190,7 @@ export async function generatePriceLabelsPdf(
       const queueItem = labelQueue[currentItemIndex]
       const product = queueItem.product
       const batchNumber = queueItem.batchNumber
+      const qrCodeUrl = queueItem.qrCodeUrl
       const barcodeValue = getProductBarcodeValue(product)
 
       // Se drawBorders estiver ativo, desenhar linha sutil tracejada para guiar o corte/destaque
@@ -260,7 +266,7 @@ export async function generatePriceLabelsPdf(
       const formattedPrice = formatCurrency(product.selling_price || 0)
       doc.text(formattedPrice, x + labelWidth - 2, priceY, { align: 'right' })
 
-      // 4. Código de barras Code 128 (canvas render -> DataUrl)
+      // 4. Código de barras Code 128 e QR Code (se consulta pública ativa no lote)
       let barcodeImg = barcodeCache.get(barcodeValue)
       if (!barcodeImg) {
         barcodeImg = generateBarcodeDataUrl(barcodeValue, {
@@ -271,24 +277,66 @@ export async function generatePriceLabelsPdf(
         barcodeCache.set(barcodeValue, barcodeImg)
       }
 
-      const barcodeW = labelWidth - 4
-      const barcodeH = 5.6
-      const barcodeY = y + labelHeight - 8.6
-
-      if (barcodeImg) {
-        try {
-          doc.addImage(barcodeImg, 'PNG', x + 2, barcodeY, barcodeW, barcodeH, undefined, 'FAST')
-        } catch (err) {
-          console.warn('Erro ao desenhar código de barras no PDF:', err)
+      if (qrCodeUrl) {
+        // Se houver QR Code de consulta pública do lote, renderiza o QR à direita e o código de barras à esquerda
+        let qrImg = qrCache.get(qrCodeUrl)
+        if (!qrImg) {
+          qrImg = generateQRCodeDataUrl(qrCodeUrl, { size: 120, margin: 1 })
+          qrCache.set(qrCodeUrl, qrImg)
         }
-      }
 
-      // 5. SKU / Código legível abaixo do código de barras
-      doc.setFont('courier', 'bold')
-      doc.setFontSize(5.2)
-      doc.setTextColor(51, 65, 85) // slate-700
-      const codeTextY = y + labelHeight - 1.2
-      doc.text(barcodeValue, x + labelWidth / 2, codeTextY, { align: 'center' })
+        const qrSize = 7.6
+        const qrX = x + labelWidth - qrSize - 2
+        const qrY = y + labelHeight - qrSize - 1.2
+
+        if (qrImg) {
+          try {
+            doc.addImage(qrImg, 'PNG', qrX, qrY, qrSize, qrSize, undefined, 'FAST')
+          } catch (err) {
+            console.warn('Erro ao desenhar QR code no PDF:', err)
+          }
+        }
+
+        // Código de barras ocupa a largura restante
+        const barcodeW = labelWidth - qrSize - 6
+        const barcodeH = 5.4
+        const barcodeY = y + labelHeight - 8.6
+
+        if (barcodeImg) {
+          try {
+            doc.addImage(barcodeImg, 'PNG', x + 2, barcodeY, barcodeW, barcodeH, undefined, 'FAST')
+          } catch (err) {
+            console.warn('Erro ao desenhar código de barras no PDF:', err)
+          }
+        }
+
+        // SKU / Código legível abaixo do código de barras
+        doc.setFont('courier', 'bold')
+        doc.setFontSize(4.8)
+        doc.setTextColor(51, 65, 85) // slate-700
+        const codeTextY = y + labelHeight - 1.2
+        doc.text(barcodeValue, x + 2 + barcodeW / 2, codeTextY, { align: 'center' })
+      } else {
+        // Sem QR Code (padrão): código de barras em largura total
+        const barcodeW = labelWidth - 4
+        const barcodeH = 5.6
+        const barcodeY = y + labelHeight - 8.6
+
+        if (barcodeImg) {
+          try {
+            doc.addImage(barcodeImg, 'PNG', x + 2, barcodeY, barcodeW, barcodeH, undefined, 'FAST')
+          } catch (err) {
+            console.warn('Erro ao desenhar código de barras no PDF:', err)
+          }
+        }
+
+        // SKU / Código legível abaixo do código de barras
+        doc.setFont('courier', 'bold')
+        doc.setFontSize(5.2)
+        doc.setTextColor(51, 65, 85) // slate-700
+        const codeTextY = y + labelHeight - 1.2
+        doc.text(barcodeValue, x + labelWidth / 2, codeTextY, { align: 'center' })
+      }
     }
   }
 

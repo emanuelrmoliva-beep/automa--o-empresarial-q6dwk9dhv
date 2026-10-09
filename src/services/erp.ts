@@ -714,14 +714,51 @@ export async function getProductionBatches(companyId: string): Promise<Productio
   return await pb.collection('production_batches').getFullList<ProductionBatch>({
     filter: `company_id = "${companyId}"`,
     sort: '-production_date,-created',
-    expand: 'product_id',
+    expand: 'product_id,company_id',
   })
 }
 
 export async function getProductionBatchById(id: string): Promise<ProductionBatch> {
   return await pb.collection('production_batches').getOne<ProductionBatch>(id, {
+    expand: 'product_id,company_id',
+  })
+}
+
+/**
+ * Consulta pública de lote de produção por token seguro (somente leitura sem login)
+ */
+export async function getPublicProductionBatchByToken(token: string): Promise<{
+  batch: ProductionBatch
+  items: ProductionBatchItem[]
+  company: { trade_name: string; legal_name: string; logo?: string; id: string } | null
+}> {
+  if (!token || !token.trim()) {
+    throw new Error('Token de consulta pública não informado.')
+  }
+  const cleanToken = token.trim()
+
+  const batch = await pb
+    .collection('production_batches')
+    .getFirstListItem<ProductionBatch>(`public_token = "${cleanToken}" && is_public = true`, {
+      expand: 'product_id,company_id',
+    })
+
+  const items = await pb.collection('production_batch_items').getFullList<ProductionBatchItem>({
+    filter: `batch_id = "${batch.id}"`,
+    sort: 'created',
     expand: 'product_id',
   })
+
+  const company = batch.expand?.company_id
+    ? {
+        id: batch.expand.company_id.id,
+        trade_name: batch.expand.company_id.trade_name,
+        legal_name: batch.expand.company_id.legal_name,
+        logo: batch.expand.company_id.logo,
+      }
+    : null
+
+  return { batch, items, company }
 }
 
 export async function createProductionBatch(

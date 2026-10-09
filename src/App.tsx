@@ -9,6 +9,7 @@ import Layout from '@/components/Layout'
 // Public & Auth Pages
 import Login from '@/pages/Login'
 import Signup from '@/pages/Signup'
+import ConsultaLotePublico from '@/pages/ConsultaLotePublico'
 import ForgotPassword from '@/pages/ForgotPassword'
 import ResetPassword from '@/pages/ResetPassword'
 import CompanyOnboarding from '@/pages/CompanyOnboarding'
@@ -116,6 +117,9 @@ const App = () => (
             <Route path="/entradas-saidas" element={<EntradasSaidas />} />
             <Route path="/configuracoes" element={<CompanySettings />} />
           </Route>
+
+          {/* Rota pública de consulta de lote (não requer login) */}
+          <Route path="/consulta-lote/:token" element={<ConsultaLotePublico />} />
 
           {/* 404 Route */}
           <Route path="*" element={<NotFound />} />

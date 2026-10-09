@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-09T09:15:35.319Z",
+  "generatedAt": "2026-10-09T09:32:09.037Z",
   "collections": [
     {
       "name": "users",
@@ -1462,8 +1462,8 @@
       "name": "production_batches",
       "type": "base",
       "apiRules": {
-        "list": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
-        "view": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "list": "(@request.auth.id != '' && company_id.user_id = @request.auth.id) || (is_public = true && public_token != '')",
+        "view": "(@request.auth.id != '' && company_id.user_id = @request.auth.id) || (is_public = true && public_token != '')",
         "create": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
         "update": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
         "delete": "@request.auth.id != '' && company_id.user_id = @request.auth.id"
@@ -1533,19 +1533,38 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "is_public",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "public_token",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "total_cost",
+          "type": "number",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": [
         "CREATE INDEX idx_batches_company_number ON production_batches (company_id, batch_number)",
-        "CREATE INDEX idx_batches_company_date ON production_batches (company_id, production_date DESC)"
+        "CREATE INDEX idx_batches_company_date ON production_batches (company_id, production_date DESC)",
+        "CREATE INDEX `idx_batches_public_token` ON `production_batches` (public_token)"
       ]
     },
     {
       "name": "production_batch_items",
       "type": "base",
       "apiRules": {
-        "list": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
-        "view": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
+        "list": "(@request.auth.id != '' && company_id.user_id = @request.auth.id) || (batch_id.is_public = true && batch_id.public_token != '')",
+        "view": "(@request.auth.id != '' && company_id.user_id = @request.auth.id) || (batch_id.is_public = true && batch_id.public_token != '')",
         "create": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
         "update": "@request.auth.id != '' && company_id.user_id = @request.auth.id",
         "delete": "@request.auth.id != '' && company_id.user_id = @request.auth.id"
@@ -1639,6 +1658,18 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "unit_cost",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "total_cost",
+          "type": "number",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": [
