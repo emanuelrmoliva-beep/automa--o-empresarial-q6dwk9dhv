@@ -44,7 +44,7 @@ export const HELP_TOPICS: HelpTopic[] = [
     categoryLabel: 'Produtos & Produção',
     title: 'Controle de Produção & Rastreabilidade de Lote',
     shortDescription:
-      'Abertura de lotes de fabricação com baixa automática de insumos no estoque, gramatura, lote do insumo, anexos de fotos, etiqueta com lote e vínculo com vendas.',
+      'Tutorial completo: rastreabilidade de ponta a ponta, insumos com gramatura e fotos, cálculo do custo total e unitário, baixa automática no estoque, consulta pública por QR Code com token seguro e vínculo em vendas.',
     iconName: 'Layers',
     route: '/producao',
     badge: 'Novidade',
@@ -56,64 +56,93 @@ export const HELP_TOPICS: HelpTopic[] = [
       'gramatura',
       'lote de fabricação',
       'baixa de estoque',
+      'devolução ao estoque',
       'fotos',
       'anexos',
-      'etiquetas',
+      'custo do lote',
+      'custo unitário',
+      'recálculo de custo',
+      'consulta pública',
+      'link público',
+      'qr code lote',
+      'token público',
+      'etiquetas com qr',
       'venda com lote',
-      'devolução',
+      'relatórios de produção',
+      'csv produção',
+      'ficha técnica',
     ],
     highlights: [
-      'Abertura de lote com número gerado automaticamente (ex: LOTE-2025-0001) e totalmente editável.',
-      'Cadastro de insumos utilizados puxando do estoque atual com baixa automática ao finalizar o lote.',
-      'Campos de gramatura e medidas (g/m², micras, mm, kg, etc.) e valor numérico.',
-      'Identificação do lote do fornecedor e data de fabricação de cada insumo.',
-      'Upload de arquivos e fotos por insumo (com miniatura e download).',
-      'Bloqueio com aviso caso a quantidade de insumos em estoque seja insuficiente.',
-      'Devolução automática ao estoque ao excluir ou editar o lote.',
-      'Etiqueta de código de barras atualizada com número do lote impresso.',
-      'Vínculo de lote de fabricação na venda com abertura da ficha completa do lote ao clicar.',
+      'O que é rastreabilidade: registro genealógico completo dos insumos, fornecedores, bobinas, gramaturas e fotos que compuseram cada produto fabricado.',
+      'Abertura de lote com numeração sequencial editável (ex: LOTE-2025-0001) e data de fabricação.',
+      'Cadastro de insumos do estoque atual (com baixa automática imediata) ou insumos externos avulsos.',
+      'Campos técnicos por insumo: tipo de medida/gramatura (g/m², micras, mm, kg, etc.), valor da medida, lote do fornecedor, data de fabricação e fotos/PDFs.',
+      'Baixa automática no estoque: ao finalizar o lote os insumos são deduzidos; ao editar ou excluir o lote as quantidades são integralmente devolvidas.',
+      'Cálculo e recálculo do custo do lote: soma de (quantidade consumida × custo unitário do insumo) com custo unitário por peça acabada.',
+      'Consulta pública com token único: ativação/desativação SIM/NÃO. Quando ativa, gera link público (/consulta-lote/:token) para clientes e parceiros.',
+      'Segurança e privacidade de dados: a página pública exibe apenas especificações técnicas e de rastreabilidade, sem nunca exibir custos, lucros ou dados financeiros.',
+      'QR Code na etiqueta de código de barras: só é impresso se a consulta pública estiver ativada, permitindo ao consumidor final escanear na embalagem.',
+      'Vínculo em vendas e orçamentos: o lote é selecionado no pedido e exibe badge interativo que abre a Ficha Completa com 1 clique.',
+      'Relatórios e Busca detalhada: visão por lote ou insumo linha a linha, filtros e exportação para CSV com todos os custos e status público.',
     ],
     steps: [
       {
-        title: '1. Acessar o Controle de Produção',
+        title: '1. O que é Rastreabilidade de Lote e Qual a sua Importância?',
         description:
-          'No menu lateral, na seção "Produtos & Produção", clique em "Controle de Produção" (rota /producao).',
+          'A rastreabilidade é a capacidade de reconstituir todo o histórico, fabricação e componentes de um lote de produto acabado. Com ela, você sabe exatamente qual bobina ou insumo foi usado, seu lote no fornecedor, gramatura, data de fabricação e fotos comprobatórias. Se houver qualquer não conformidade ou recall, você identifica instantaneamente quais clientes receberam o produto.',
       },
       {
-        title: '2. Abrir um Novo Lote de Produção',
+        title: '2. Abertura do Lote de Produção',
         description:
-          'Clique no botão "+ Abertura de Lote". O sistema gera automaticamente um número sequencial editável (ex.: LOTE-2025-0001). Defina a data de produção, produto fabricado e quantidade.',
-        tip: 'O produto fabricado serve apenas como registro de rastreabilidade e não entra no estoque automaticamente, conforme regra do negócio.',
+          'Na tela "Controle de Produção" (rota /producao), clique em "+ Abertura de Lote". O sistema gera automaticamente um código sequencial (ex.: LOTE-2025-0001) que pode ser personalizado. Informe a data de produção, selecione o produto fabricado no catálogo (ou digite o nome livremente) e informe a quantidade produzida.',
+        tip: 'Regra importante: o produto fabricado serve para identificação da rastreabilidade e NÃO entra no estoque de mercadorias automaticamente.',
       },
       {
-        title: '3. Cadastrar os Insumos Utilizados',
+        title: '3. Adicionar Insumos e Detalhes Técnicos de Medida',
         description:
-          'Para cada insumo, você pode selecionar um item do estoque atual ou cadastrar avulso. Informe o tipo de gramatura/medida (ex.: g/m²), valor numérico, lote do insumo/fornecedor, data de fabricação, quantidade consumida e observações de individualização.',
+          'Para cada insumo utilizado, você pode: (a) selecionar um produto do estoque atual — o preço de custo e estoque são puxados de imediato; ou (b) escolher "Insumo Avulso / Externo" para insumos que não passam pelo estoque cadastrado. Preencha o tipo de gramatura (g/m², micras, mm, kg, etc.), valor da medida, lote do insumo/fornecedor, data de fabricação do insumo, quantidade consumida e observações adicionais para individualização.',
       },
       {
-        title: '4. Anexar Fotos e Documentos aos Insumos',
+        title: '4. Anexar Fotos da Bobina/Etiqueta e Certificados em PDF',
         description:
-          'Clique em "Anexar Arquivo/Foto" para enviar comprovantes, etiquetas da bobina ou certificados em PDF ou imagem. Os arquivos ficam salvos e acessíveis na ficha do lote.',
+          'Clique em "Anexar Arquivo/Foto" em cada insumo para anexar comprovações visuais: fotos de rótulos do fornecedor, certificados de laudo técnico ou notas fiscais de compra em PDF. Esses arquivos ficam protegidos na nuvem e podem ser visualizados ou baixados na ficha completa.',
       },
       {
-        title: '5. Baixa Automática e Validação de Estoque',
+        title: '5. Baixa Automática no Estoque e Devolução ao Editar/Excluir',
         description:
-          'Ao salvar o lote como "Finalizado", as quantidades de insumos vinculados ao estoque são imediatamente baixadas. Se não houver saldo suficiente, o sistema bloqueia e avisa com precisão.',
+          'Se o lote estiver com status "Finalizado", o sistema valida o saldo em estoque dos insumos vinculados e realiza a baixa automática. Se o saldo for insuficiente, a gravação é bloqueada com aviso em destaque. Caso você edite o lote (alterando quantidades ou insumos) ou exclua o lote, o sistema calcula a diferença e devolve automaticamente os insumos ao estoque físico.',
+        tip: 'Se salvar como status "Aberto", a baixa de estoque fica pendente até a finalização da ordem de produção.',
       },
       {
-        title: '6. Etiqueta com Número do Lote',
+        title: '6. Custo Total do Lote e Custo por Unidade Produzida',
         description:
-          'No módulo de Estoque, ao imprimir etiquetas de código de barras para um produto, você pode selecionar de qual lote puxar o número. O lote aparecerá destacado na etiqueta junto ao preço e código de barras.',
+          'O custo total é calculado automaticamente somando a multiplicação da quantidade consumida pelo custo unitário de cada insumo. Para itens do estoque, o custo vem do cadastro do produto; para insumos avulsos, você digita o custo unitário no formulário. Se houver quantidade fabricada informada, o sistema divide o custo total pela quantidade, exibindo o custo unitário por peça acabada. Ao editar insumos, o custo total é recalculado automaticamente.',
       },
       {
-        title: '7. Vincular Lote na Venda e Abrir Ficha Técnica',
+        title: '7. Consulta Pública de Rastreabilidade (Ativar/Desativar SIM/NÃO)',
         description:
-          'Ao registrar uma venda comercial ou converter um orçamento, selecione o lote de origem para o produto vendido. Na lista de vendas e no histórico do cliente, clique na tag do lote para abrir instantaneamente a ficha técnica completa com todos os insumos e fotos.',
+          'Cada lote pode ter a Consulta Pública ativada ou desativada. Ao ativar (seja no card, na tabela ou dentro da Ficha Completa), é gerado um token criptográfico único e seguro que forma o link público (/consulta-lote/:token). Você pode copiar o link para enviar a clientes, auditores ou parceiros comerciais.',
+        tip: 'Ao desativar a consulta pública (marcando NÃO), o token é invalidado e qualquer pessoa que acessar o link anterior verá um aviso de lote privado/indisponível.',
       },
       {
-        title: '8. Relatórios de Produção e Busca Completa',
+        title: '8. O que Fica Visível Publicamente e o que NUNCA é Exposto',
         description:
-          'Na aba "Relatórios & Busca", utilize a caixa de pesquisa para localizar qualquer lote buscando por número, nome de insumo, lote do fornecedor, gramatura ou observações, com exportação para planilha CSV.',
+          'A página pública exibe: número do lote, data de fabricação, produto, status, insumos utilizados com lote do fornecedor, gramatura/medida e galeria de fotos/certificados anexados. DADOS FINANCEIROS (custo dos insumos, custo total do lote, margens, preços de compra) NUNCA são expostos ao público, garantindo sigilo comercial absoluto da sua empresa.',
+      },
+      {
+        title: '9. Impressão de Etiquetas com QR Code da Consulta Pública',
+        description:
+          'No módulo de Estoque, ao gerar etiquetas de gôndola/código de barras e selecionar o lote de produção correspondente, o sistema verifica se a consulta pública está ativa. Se estiver SIM, renderiza um QR Code nítido na etiqueta apontando para a URL pública do lote. Se estiver NÃO, o QR Code é omitido da etiqueta, preservando a privacidade.',
+      },
+      {
+        title: '10. Vincular o Lote à Venda Comercial e Abrir a Ficha Completa',
+        description:
+          'No momento de registrar uma venda ou converter um orçamento aprovado, selecione qual lote de produção atende cada item vendido. Na listagem de vendas e no histórico do cliente, um badge esmeralda do lote é exibido. Basta clicar nele para abrir instantaneamente a Ficha Completa do lote sem trocar de tela.',
+      },
+      {
+        title: '11. Relatórios de Produção e Exportação para Planilha CSV',
+        description:
+          'Acesse a aba "Relatórios & Busca" para pesquisar insumos ou lotes por qualquer palavra-chave (número do lote, nome do produto, fornecedor, gramatura). Clique em "Exportar CSV" para baixar uma planilha completa contendo todas as colunas: datas, status, consulta pública (SIM/NÃO), token, quantidades, custo total, custo unitário e insumos detalhados linha a linha.',
       },
     ],
   },
@@ -1429,6 +1458,78 @@ export const HELP_TOPICS: HelpTopic[] = [
 ]
 
 export const FAQ_LIST: FAQItem[] = [
+  {
+    id: 'faq-producao-1',
+    category: 'Produção & Lotes',
+    question: 'O produto fabricado entra no estoque automaticamente?',
+    answer:
+      'Não. O cadastro do lote e a seleção do produto fabricado servem estritamente para registro de rastreabilidade e histórico de fabricação. Caso você deseje dar entrada nas mercadorias acabadas no estoque físico para venda, faça a entrada manual correspondente no módulo Estoque.',
+    relatedTopicId: 'controle-producao-lotes',
+  },
+  {
+    id: 'faq-producao-2',
+    category: 'Produção & Lotes',
+    question: 'A baixa de insumos é revertida ao editar ou excluir um lote?',
+    answer:
+      'Sim, perfeitamente. Se você excluir um lote finalizado, todos os insumos consumidos são estornados e devolvidos integralmente ao estoque. Caso você edite o lote (trocando insumos ou alterando quantidades), o sistema recalcula as diferenças e ajusta o saldo em estoque com precisão matemática.',
+    relatedTopicId: 'controle-producao-lotes',
+  },
+  {
+    id: 'faq-producao-3',
+    category: 'Produção & Lotes',
+    question: 'Quem pode ver o link da Consulta Pública do lote?',
+    answer:
+      'Qualquer pessoa que estiver de posse do link exclusivo ou escanear o QR Code impresso na embalagem (clientes, fiscais, parceiros ou consumidores). O link possui um token criptográfico aleatório e difícil de adivinhar, não existindo listagem aberta ou busca pública por outros lotes na internet.',
+    relatedTopicId: 'controle-producao-lotes',
+  },
+  {
+    id: 'faq-producao-4',
+    category: 'Produção & Lotes',
+    question: 'O QR Code aparece na etiqueta sem a consulta pública ativada?',
+    answer:
+      'Não. O gerador de etiquetas de código de barras verifica o status do lote selecionado. Se a Consulta Pública estiver marcada como "NÃO" (ou desativada), o QR Code é expressamente omitido da etiqueta impressa, garantindo que nenhum link inativo ou dado indesejado seja veiculado.',
+    relatedTopicId: 'controle-producao-lotes',
+  },
+  {
+    id: 'faq-producao-5',
+    category: 'Produção & Lotes',
+    question: 'O custo do lote é recalculado ao editar insumos ou quantidades?',
+    answer:
+      'Sim. O custo total do lote é obtido pela soma da quantidade de cada insumo multiplicada pelo seu respectivo custo unitário. Se você alterar a quantidade utilizada, substituir um insumo ou ajustar o valor unitário no formulário de edição, o custo total e o custo por unidade fabricada são recalculados instantaneamente.',
+    relatedTopicId: 'controle-producao-lotes',
+  },
+  {
+    id: 'faq-producao-6',
+    category: 'Produção & Lotes',
+    question: 'Lotes antigos continuam consultáveis pelos clientes?',
+    answer:
+      'Sim. Desde que a Consulta Pública permaneça ativada (status SIM) e o token público não seja alterado ou excluído, qualquer lote antigo já fabricado continua acessível para consulta pelos clientes a qualquer momento.',
+    relatedTopicId: 'controle-producao-lotes',
+  },
+  {
+    id: 'faq-producao-7',
+    category: 'Produção & Lotes',
+    question: 'O que acontece ao desativar a consulta pública de um lote?',
+    answer:
+      'Ao alterar a consulta para "NÃO", o token público é invalidado e removido. Se alguém tentar acessar o link antigo ou escanear um QR Code prévio, a página pública informará que a consulta para aquele lote não está disponível ou foi desativada pela empresa.',
+    relatedTopicId: 'controle-producao-lotes',
+  },
+  {
+    id: 'faq-producao-8',
+    category: 'Produção & Lotes',
+    question: 'Quais dados ficam visíveis publicamente na consulta do lote?',
+    answer:
+      'Ficam visíveis exclusivamente informações técnicas de qualidade e rastreabilidade: número do lote, data de fabricação, nome do produto acabado, insumos utilizados (nome, lote do fornecedor, gramatura/medida) e fotos ou laudos técnicos anexados. DADOS FINANCEIROS (custo do lote, custo unitário, preços de insumos e lucros) NUNCA são expostos na página pública.',
+    relatedTopicId: 'controle-producao-lotes',
+  },
+  {
+    id: 'faq-producao-9',
+    category: 'Produção & Lotes',
+    question: 'Posso usar insumos que não estão cadastrados no meu estoque?',
+    answer:
+      'Sim. Na seleção do insumo dentro do lote, escolha a opção "Insumo Avulso / Externo". Você poderá digitar livremente o nome do insumo, medidas, lote do fabricante, fotos e custo unitário sem gerar movimentação nem baixa no estoque cadastrado.',
+    relatedTopicId: 'controle-producao-lotes',
+  },
   {
     id: 'faq-1',
     category: 'Conta & Acesso',

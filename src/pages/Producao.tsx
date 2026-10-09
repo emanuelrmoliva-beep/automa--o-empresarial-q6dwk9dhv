@@ -21,6 +21,13 @@ import {
   Barcode,
   ChevronRight,
   Filter,
+  DollarSign,
+  Globe,
+  Copy,
+  Check,
+  ToggleLeft,
+  ToggleRight,
+  ExternalLink,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
@@ -39,7 +46,7 @@ import {
 } from '@/services/erp'
 import { applyStockDeltas, validateProductionStockAvailability } from '@/services/stockSync'
 import type { ProductionBatch, ProductionBatchItem, Product } from '@/types/erp'
-import { formatDatePtBr } from '@/lib/formatters'
+import { formatDatePtBr, formatCurrency } from '@/lib/formatters'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -86,6 +93,7 @@ interface DraftItem {
   manufacture_date: string
   quantity_used: string
   unit_measure: string
+  unit_cost: string
   notes: string
   existingFiles: string[]
   newFiles: File[]
@@ -134,6 +142,94 @@ export const Producao: React.FC = () => {
   // Confirmação de Exclusão
   const [deleteTargetBatch, setDeleteTargetBatch] = useState<ProductionBatch | null>(null)
   const [deleting, setDeleting] = useState(false)
+
+  // Estado para alternar consulta pública e copiar link
+  const [togglingPublicId, setTogglingPublicId] = useState<string | null>(null)
+  const [copiedToken, setCopiedToken] = useState<string | null>(null)
+
+  // Função auxiliar para calcular custo do lote a partir dos itens ou de total_cost
+  const getBatchCostInfo = useCallback((b: ProductionBatch & { items?: ProductionBatchItem[] }) => {
+    const items = b.items || []
+    const calculatedItemsCost = items.reduce(
+      (sum, it) =>
+        sum +
+        (it.total_cost != null && it.total_cost > 0
+          ? it.total_cost
+          : (it.unit_cost || 0) * (it.quantity_used || 0)),
+      0,
+    )
+    const totalCost = b.total_cost != null && b.total_cost > 0 ? b.total_cost : calculatedItemsCost
+    const qty = b.quantity_produced || 0
+    const unitCost = qty > 0 ? totalCost / qty : null
+    return { totalCost, unitCost }
+  }, [])
+
+  // Ação rápida para alternar consulta pública diretamente na listagem
+  const handleTogglePublic = async (batch: ProductionBatch & { items?: ProductionBatchItem[] }) => {
+    try {
+      setTogglingPublicId(batch.id)
+      const nextIsPublic = !batch.is_public
+      let nextToken = batch.public_token
+
+      if (nextIsPublic && !nextToken) {
+        nextToken =
+          'lote_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 12)
+      }
+
+      await updateProductionBatch(batch.id, {
+        is_public: nextIsPublic,
+        public_token: nextIsPublic ? nextToken : '',
+      })
+
+      setBatches((prev) =>
+        prev.map((b) =>
+          b.id === batch.id
+            ? {
+                ...b,
+                is_public: nextIsPublic,
+                public_token: nextIsPublic ? nextToken : '',
+              }
+            : b,
+        ),
+      )
+
+      toast({
+        title: nextIsPublic ? 'Consulta Pública Ativada' : 'Consulta Pública Desativada',
+        description: nextIsPublic
+          ? 'O lote agora possui URL pública e QR Code ativos para clientes.'
+          : 'O acesso público foi revogado. O link anterior não funcionará mais.',
+      })
+    } catch (err: any) {
+      toast({
+        title: 'Erro ao alterar consulta pública',
+        description: err?.message || 'Falha ao salvar preferências de visibilidade.',
+        variant: 'destructive',
+      })
+    } finally {
+      setTogglingPublicId(null)
+    }
+  }
+
+  // Copiar link público
+  const handleCopyPublicLink = async (token?: string) => {
+    if (!token) return
+    const url = `${window.location.origin}/consulta-lote/${token}`
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopiedToken(token)
+      toast({
+        title: 'Link público copiado!',
+        description: 'URL de consulta do lote copiada para a área de transferência.',
+      })
+      setTimeout(() => setCopiedToken(null), 2500)
+    } catch {
+      toast({
+        title: 'Erro ao copiar',
+        description: 'Não foi possível copiar o link automaticamente.',
+        variant: 'destructive',
+      })
+    }
+  }
 
   const loadData = useCallback(async () => {
     if (!company) return
@@ -200,6 +296,7 @@ export const Producao: React.FC = () => {
         manufacture_date: '',
         quantity_used: '1',
         unit_measure: 'un',
+        unit_cost: '',
         notes: '',
         existingFiles: [],
         newFiles: [],
@@ -230,6 +327,7 @@ export const Producao: React.FC = () => {
       manufacture_date: it.manufacture_date ? it.manufacture_date.split('T')[0] : '',
       quantity_used: String(it.quantity_used),
       unit_measure: it.unit_measure || 'un',
+      unit_cost: it.unit_cost != null && it.unit_cost > 0 ? String(it.unit_cost) : '',
       notes: it.notes || '',
       existingFiles: it.attachments || [],
       newFiles: [],
@@ -247,6 +345,7 @@ export const Producao: React.FC = () => {
               manufacture_date: '',
               quantity_used: '1',
               unit_measure: 'un',
+              unit_cost: '',
               notes: '',
               existingFiles: [],
               newFiles: [],
@@ -269,6 +368,7 @@ export const Producao: React.FC = () => {
         manufacture_date: '',
         quantity_used: '1',
         unit_measure: 'un',
+        unit_cost: '',
         notes: '',
         existingFiles: [],
         newFiles: [],
@@ -301,6 +401,7 @@ export const Producao: React.FC = () => {
       product_id: prod.id,
       item_name: prod.name,
       supplier_batch_number: prod.sku ? `SKU-${prod.sku}` : '',
+      unit_cost: prod.cost_price != null && prod.cost_price > 0 ? String(prod.cost_price) : '',
     })
   }
 
@@ -411,6 +512,14 @@ export const Producao: React.FC = () => {
           ? products.find((p) => p.id === selectedProductId)?.name || productName
           : productName
 
+      // Calcular custo total do lote a partir dos insumos no formulário
+      let calculatedBatchTotalCost = 0
+      for (const it of itemsDraft) {
+        const qVal = parseFloat(it.quantity_used.replace(',', '.')) || 0
+        const uCost = parseFloat(it.unit_cost ? it.unit_cost.replace(',', '.') : '0') || 0
+        calculatedBatchTotalCost += qVal * uCost
+      }
+
       let savedBatchId = editingBatch?.id
 
       if (editingBatch) {
@@ -480,6 +589,7 @@ export const Producao: React.FC = () => {
           quantity_produced: numProduced,
           status,
           notes: batchNotes,
+          total_cost: calculatedBatchTotalCost,
         })
       } else {
         // NOVO LOTE
@@ -492,6 +602,7 @@ export const Producao: React.FC = () => {
           quantity_produced: numProduced,
           status,
           notes: batchNotes,
+          total_cost: calculatedBatchTotalCost,
         })
         savedBatchId = newBatch.id
 
@@ -548,6 +659,13 @@ export const Producao: React.FC = () => {
         const qVal = parseFloat(item.quantity_used.replace(',', '.')) || 1
         formData.append('quantity_used', String(qVal))
         formData.append('unit_measure', item.unit_measure || 'un')
+
+        // Custo Unitário e Custo Total do Item
+        const uCost = parseFloat(item.unit_cost ? item.unit_cost.replace(',', '.') : '0') || 0
+        const itemTotalCost = qVal * uCost
+        formData.append('unit_cost', String(uCost))
+        formData.append('total_cost', String(itemTotalCost))
+
         if (item.notes) formData.append('notes', item.notes)
 
         // Anexar novos arquivos (fotos/PDFs)
@@ -688,8 +806,12 @@ export const Producao: React.FC = () => {
       'DataProducao',
       'NumeroLote',
       'Status',
+      'ConsultaPublica',
+      'TokenPublico',
       'ProdutoFabricado',
       'QtdFabricada',
+      'CustoTotalLote',
+      'CustoUnitarioLote',
       'NomeInsumo',
       'MedidaGramatura',
       'ValorGramatura',
@@ -697,6 +819,8 @@ export const Producao: React.FC = () => {
       'DataFabricacaoInsumo',
       'QtdInsumoUtilizada',
       'UnidadeInsumo',
+      'CustoUnitarioInsumo',
+      'CustoTotalInsumo',
       'DetalhesObservacoesInsumo',
       'QtdAnexosInsumo',
     ].join(',')
@@ -705,14 +829,24 @@ export const Producao: React.FC = () => {
 
     filteredBatches.forEach((b) => {
       const items = b.items || []
+      const { totalCost, unitCost } = getBatchCostInfo(b)
+      const costLoteStr = totalCost > 0 ? totalCost.toFixed(2) : '0.00'
+      const costUnitStr = unitCost != null ? unitCost.toFixed(2) : '0.00'
+      const isPublicStr = b.is_public ? 'SIM' : 'NAO'
+      const tokenStr = b.public_token || ''
+
       if (items.length === 0) {
         rows.push(
           [
             `"${formatDatePtBr(b.production_date)}"`,
             `"${b.batch_number}"`,
             `"${b.status}"`,
+            `"${isPublicStr}"`,
+            `"${tokenStr}"`,
             `"${b.product_name || b.expand?.product_id?.name || ''}"`,
             `"${b.quantity_produced ?? 0}"`,
+            `"${costLoteStr}"`,
+            `"${costUnitStr}"`,
             '""',
             '""',
             '""',
@@ -720,19 +854,31 @@ export const Producao: React.FC = () => {
             '""',
             '""',
             '""',
+            '"0.00"',
+            '"0.00"',
             `"${(b.notes || '').replace(/"/g, '""')}"`,
             '"0"',
           ].join(','),
         )
       } else {
         items.forEach((it) => {
+          const itTotal =
+            it.total_cost != null && it.total_cost > 0
+              ? it.total_cost
+              : (it.unit_cost || 0) * (it.quantity_used || 0)
+          const itUnit = it.unit_cost || 0
+
           rows.push(
             [
               `"${formatDatePtBr(b.production_date)}"`,
               `"${b.batch_number}"`,
               `"${b.status}"`,
+              `"${isPublicStr}"`,
+              `"${tokenStr}"`,
               `"${b.product_name || b.expand?.product_id?.name || ''}"`,
               `"${b.quantity_produced ?? 0}"`,
+              `"${costLoteStr}"`,
+              `"${costUnitStr}"`,
               `"${it.item_name}"`,
               `"${it.grammage_type || ''}"`,
               `"${it.grammage_value ?? ''}"`,
@@ -740,6 +886,8 @@ export const Producao: React.FC = () => {
               `"${it.manufacture_date ? formatDatePtBr(it.manufacture_date) : ''}"`,
               `"${it.quantity_used}"`,
               `"${it.unit_measure || 'un'}"`,
+              `"${itUnit.toFixed(2)}"`,
+              `"${itTotal.toFixed(2)}"`,
               `"${(it.notes || '').replace(/"/g, '""')}"`,
               `"${it.attachments?.length || 0}"`,
             ].join(','),
@@ -914,6 +1062,7 @@ export const Producao: React.FC = () => {
                 (sum, it) => sum + (it.attachments?.length || 0),
                 0,
               )
+              const { totalCost, unitCost } = getBatchCostInfo(batch)
 
               return (
                 <div
@@ -933,15 +1082,51 @@ export const Producao: React.FC = () => {
                       </p>
                     </div>
 
-                    <Badge
-                      className={
-                        batch.status === 'finalizado'
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          : 'bg-amber-50 text-amber-700 border-amber-200'
-                      }
-                    >
-                      {batch.status === 'finalizado' ? 'Finalizado' : 'Aberto'}
-                    </Badge>
+                    <div className="flex flex-col items-end gap-1">
+                      <Badge
+                        className={
+                          batch.status === 'finalizado'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : 'bg-amber-50 text-amber-700 border-amber-200'
+                        }
+                      >
+                        {batch.status === 'finalizado' ? 'Finalizado' : 'Aberto'}
+                      </Badge>
+                      <button
+                        type="button"
+                        onClick={() => handleTogglePublic(batch)}
+                        disabled={togglingPublicId === batch.id}
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold transition ${
+                          batch.is_public
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                            : 'bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200'
+                        }`}
+                        title="Alternar Consulta Pública"
+                      >
+                        <Globe className="w-3 h-3" />
+                        {batch.is_public ? 'Pública: SIM' : 'Pública: NÃO'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Bloco de Custo do Lote */}
+                  <div className="grid grid-cols-2 gap-2 bg-emerald-50/70 p-2.5 rounded-lg border border-emerald-200/80 text-xs">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-emerald-800 block flex items-center gap-1">
+                        <DollarSign className="w-3 h-3 text-emerald-600" /> Custo Total
+                      </span>
+                      <span className="font-mono font-bold text-emerald-700 text-sm">
+                        {formatCurrency(totalCost)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-emerald-800 block">
+                        Custo / Unidade
+                      </span>
+                      <span className="font-mono font-semibold text-emerald-900 text-xs">
+                        {unitCost != null ? `${formatCurrency(unitCost)} / un` : '—'}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Resumo de Insumos */}
@@ -961,6 +1146,43 @@ export const Producao: React.FC = () => {
                       {items.map((it) => it.item_name).join(', ') || 'Nenhum insumo'}
                     </p>
                   </div>
+
+                  {/* Link público quando ativo */}
+                  {batch.is_public && batch.public_token && (
+                    <div className="flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-emerald-200 text-[11px]">
+                      <span className="text-emerald-800 font-medium flex items-center gap-1">
+                        <Globe className="w-3 h-3 text-emerald-600" /> Link de Consulta
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleCopyPublicLink(batch.public_token)}
+                          className="h-6 px-2 text-[10px] text-emerald-700 hover:bg-emerald-50"
+                        >
+                          {copiedToken === batch.public_token ? (
+                            <>
+                              <Check className="w-3 h-3 mr-1 text-emerald-600" /> Copiado!
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3 h-3 mr-1" /> Copiar Link
+                            </>
+                          )}
+                        </Button>
+                        <a
+                          href={`/consulta-lote/${batch.public_token}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="h-6 px-2 inline-flex items-center text-[10px] text-emerald-700 hover:text-emerald-800"
+                          title="Abrir página pública"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Ações */}
                   <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
@@ -1009,6 +1231,8 @@ export const Producao: React.FC = () => {
                     <th className="py-3 px-4">Lote Fabricado</th>
                     <th className="py-3 px-4">Produto & Quantidade</th>
                     <th className="py-3 px-4">Insumos Utilizados</th>
+                    <th className="py-3 px-4 text-right">Custo Total / Unit.</th>
+                    <th className="py-3 px-4 text-center">Consulta Pública</th>
                     <th className="py-3 px-4 text-center">Status</th>
                     <th className="py-3 px-4 text-right">Ações</th>
                   </tr>
@@ -1020,6 +1244,7 @@ export const Producao: React.FC = () => {
                       (sum, it) => sum + (it.attachments?.length || 0),
                       0,
                     )
+                    const { totalCost, unitCost } = getBatchCostInfo(batch)
 
                     return (
                       <tr key={batch.id} className="hover:bg-slate-50/60 transition">
@@ -1042,7 +1267,7 @@ export const Producao: React.FC = () => {
                           </button>
                         </td>
 
-                        <td className="py-3 px-4 text-slate-700 max-w-[200px]">
+                        <td className="py-3 px-4 text-slate-700 max-w-[190px]">
                           <p className="truncate font-medium">
                             {batch.product_name ||
                               batch.expand?.product_id?.name ||
@@ -1053,7 +1278,7 @@ export const Producao: React.FC = () => {
                           </span>
                         </td>
 
-                        <td className="py-3 px-4 text-slate-600 max-w-[260px]">
+                        <td className="py-3 px-4 text-slate-600 max-w-[220px]">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded font-semibold">
                               <Package className="w-2.5 h-2.5" /> {items.length} insumo(s)
@@ -1067,6 +1292,83 @@ export const Producao: React.FC = () => {
                           <p className="text-[11px] text-slate-500 truncate mt-0.5">
                             {items.map((it) => it.item_name).join(', ')}
                           </p>
+                        </td>
+
+                        {/* Coluna Custo Total / Unitário */}
+                        <td className="py-3 px-4 text-right whitespace-nowrap">
+                          <span className="font-mono font-bold text-emerald-700 block">
+                            {formatCurrency(totalCost)}
+                          </span>
+                          {unitCost != null ? (
+                            <span className="text-[10px] text-slate-500 font-mono block">
+                              {formatCurrency(unitCost)}/un
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-slate-400 block">—</span>
+                          )}
+                        </td>
+
+                        {/* Coluna Consulta Pública (Alternar SIM/NÃO + Copiar) */}
+                        <td className="py-3 px-4 text-center whitespace-nowrap">
+                          <div className="flex flex-col items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleTogglePublic(batch)}
+                              disabled={togglingPublicId === batch.id}
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold transition ${
+                                batch.is_public
+                                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200'
+                                  : 'bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200'
+                              }`}
+                              title={
+                                batch.is_public
+                                  ? 'Clique para desativar o acesso público'
+                                  : 'Clique para ativar a consulta pública'
+                              }
+                            >
+                              {batch.is_public ? (
+                                <>
+                                  <ToggleRight className="w-3.5 h-3.5 text-emerald-600" />
+                                  <span>SIM</span>
+                                </>
+                              ) : (
+                                <>
+                                  <ToggleLeft className="w-3.5 h-3.5 text-slate-400" />
+                                  <span>NÃO</span>
+                                </>
+                              )}
+                            </button>
+
+                            {batch.is_public && batch.public_token && (
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyPublicLink(batch.public_token)}
+                                  className="text-[10px] text-emerald-700 hover:text-emerald-900 inline-flex items-center gap-0.5 hover:underline"
+                                  title="Copiar URL pública do lote"
+                                >
+                                  {copiedToken === batch.public_token ? (
+                                    <>
+                                      <Check className="w-3 h-3 text-emerald-600" /> Copiado!
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Copy className="w-3 h-3" /> Copiar link
+                                    </>
+                                  )}
+                                </button>
+                                <a
+                                  href={`/consulta-lote/${batch.public_token}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-slate-400 hover:text-emerald-700"
+                                  title="Abrir página pública em nova aba"
+                                >
+                                  <ExternalLink className="w-3 h-3" />
+                                </a>
+                              </div>
+                            )}
+                          </div>
                         </td>
 
                         <td className="py-3 px-4 text-center">
@@ -1143,6 +1445,7 @@ export const Producao: React.FC = () => {
                     <th className="py-2.5 px-3">Lote Insumo</th>
                     <th className="py-2.5 px-3">Fabricação Insumo</th>
                     <th className="py-2.5 px-3 text-right">Qtd Consumida</th>
+                    <th className="py-2.5 px-3 text-right">Custo Insumo</th>
                     <th className="py-2.5 px-3">Observações / Anexos</th>
                     <th className="py-2.5 px-3 text-right">Ficha</th>
                   </tr>
@@ -1161,7 +1464,7 @@ export const Producao: React.FC = () => {
                               {formatDatePtBr(batch.production_date)}
                             </span>
                           </td>
-                          <td colSpan={6} className="py-2.5 px-3 text-slate-400 italic">
+                          <td colSpan={7} className="py-2.5 px-3 text-slate-400 italic">
                             Sem insumos cadastrados
                           </td>
                           <td className="py-2.5 px-3 text-right">
@@ -1204,6 +1507,30 @@ export const Producao: React.FC = () => {
                             >
                               {batch.status}
                             </Badge>
+
+                            {/* Custo total do lote no agrupamento da linha */}
+                            <div className="mt-2 pt-1 border-t border-slate-200/70 text-[10px]">
+                              <span className="text-slate-400 uppercase font-semibold block text-[9px]">
+                                Custo Lote:
+                              </span>
+                              <span className="font-mono font-bold text-emerald-700">
+                                {formatCurrency(getBatchCostInfo(batch).totalCost)}
+                              </span>
+                            </div>
+
+                            {/* Consulta pública badge */}
+                            <div className="mt-1">
+                              <span
+                                className={`inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.2 rounded ${
+                                  batch.is_public
+                                    ? 'bg-emerald-100 text-emerald-800'
+                                    : 'bg-slate-100 text-slate-600'
+                                }`}
+                              >
+                                <Globe className="w-2.5 h-2.5" />
+                                {batch.is_public ? 'Pública' : 'Privada'}
+                              </span>
+                            </div>
                           </td>
                         ) : null}
 
@@ -1232,6 +1559,21 @@ export const Producao: React.FC = () => {
 
                         <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900 whitespace-nowrap">
                           {item.quantity_used} {item.unit_measure || 'un'}
+                        </td>
+
+                        <td className="py-2.5 px-3 text-right font-mono text-slate-800 whitespace-nowrap">
+                          <span className="block font-semibold">
+                            {formatCurrency(
+                              item.total_cost != null && item.total_cost > 0
+                                ? item.total_cost
+                                : (item.unit_cost || 0) * (item.quantity_used || 0),
+                            )}
+                          </span>
+                          {item.unit_cost != null && item.unit_cost > 0 && (
+                            <span className="block text-[10px] text-slate-400">
+                              {formatCurrency(item.unit_cost)}/un
+                            </span>
+                          )}
                         </td>
 
                         <td className="py-2.5 px-3 text-slate-600 max-w-[200px]">
@@ -1437,7 +1779,7 @@ export const Producao: React.FC = () => {
 
             {/* SEÇÃO 2: INSUMOS UTILIZADOS PARA PRODUZIR O LOTE */}
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-2">
                 <div>
                   <h4 className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
                     <Package className="w-4 h-4 text-emerald-600" />
@@ -1445,19 +1787,40 @@ export const Producao: React.FC = () => {
                   </h4>
                   <p className="text-[11px] text-slate-500">
                     Selecione insumos do estoque atual (com baixa automática) ou insumos externos,
-                    informe medidas/gramatura, lote do fornecedor e fotos/anexos.
+                    informe medidas/gramatura, custo unitário e fotos/anexos.
                   </p>
                 </div>
 
-                <Button
-                  type="button"
-                  onClick={handleAddDraftItem}
-                  variant="outline"
-                  size="sm"
-                  className="text-xs text-emerald-700 border-emerald-300 hover:bg-emerald-50 h-8"
-                >
-                  <Plus className="w-3.5 h-3.5 mr-1" /> Adicionar Insumo
-                </Button>
+                {/* Resumo dinâmico do custo calculado no formulário */}
+                <div className="flex items-center gap-3">
+                  <div className="text-right bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-200">
+                    <span className="text-[10px] uppercase font-bold text-emerald-800 block">
+                      Custo Total Calculado
+                    </span>
+                    <span className="font-mono font-bold text-emerald-700 text-sm">
+                      {formatCurrency(
+                        itemsDraft.reduce(
+                          (sum, it) =>
+                            sum +
+                            (parseFloat(it.quantity_used.replace(',', '.')) || 0) *
+                              (parseFloat(it.unit_cost ? it.unit_cost.replace(',', '.') : '0') ||
+                                0),
+                          0,
+                        ),
+                      )}
+                    </span>
+                  </div>
+
+                  <Button
+                    type="button"
+                    onClick={handleAddDraftItem}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs text-emerald-700 border-emerald-300 hover:bg-emerald-50 h-8"
+                  >
+                    <Plus className="w-3.5 h-3.5 mr-1" /> Adicionar Insumo
+                  </Button>
+                </div>
               </div>
 
               {/* Lista de Insumos */}
@@ -1522,8 +1885,8 @@ export const Producao: React.FC = () => {
                       )}
                     </div>
 
-                    {/* Linha 2: Gramatura, Lote do Insumo, Fabricação e Quantidade */}
-                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                    {/* Linha 2: Gramatura, Lote do Insumo, Fabricação, Quantidade e Custo */}
+                    <div className="grid grid-cols-2 sm:grid-cols-6 gap-2.5">
                       {/* Tipo de Gramatura */}
                       <div>
                         <Label className="text-[10px] font-semibold text-slate-600 uppercase">
@@ -1551,7 +1914,7 @@ export const Producao: React.FC = () => {
                       {/* Valor Numérico da Gramatura */}
                       <div>
                         <Label className="text-[10px] font-semibold text-slate-600 uppercase">
-                          Valor Gramatura/Medida
+                          Valor Medida
                         </Label>
                         <Input
                           type="number"
@@ -1568,7 +1931,7 @@ export const Producao: React.FC = () => {
                       {/* Lote do Insumo / Fornecedor */}
                       <div>
                         <Label className="text-[10px] font-semibold text-slate-600 uppercase">
-                          Lote do Insumo (Texto)
+                          Lote do Insumo
                         </Label>
                         <Input
                           value={item.supplier_batch_number}
@@ -1577,7 +1940,7 @@ export const Producao: React.FC = () => {
                               supplier_batch_number: e.target.value,
                             })
                           }
-                          placeholder="Ex: LOTE-BOB-998"
+                          placeholder="Ex: BOB-998"
                           className="h-8 text-xs font-mono mt-1"
                         />
                       </div>
@@ -1585,7 +1948,7 @@ export const Producao: React.FC = () => {
                       {/* Data de Fabricação do Insumo */}
                       <div>
                         <Label className="text-[10px] font-semibold text-slate-600 uppercase">
-                          Data Fabricação Insumo
+                          Data Fabricação
                         </Label>
                         <Input
                           type="date"
@@ -1598,7 +1961,7 @@ export const Producao: React.FC = () => {
                       </div>
 
                       {/* Quantidade Utilizada */}
-                      <div className="col-span-2 sm:col-span-1">
+                      <div>
                         <Label className="text-[10px] font-semibold text-slate-600 uppercase">
                           Qtd Utilizada <span className="text-red-500">*</span>
                         </Label>
@@ -1621,9 +1984,34 @@ export const Producao: React.FC = () => {
                               handleUpdateDraftItem(idx, { unit_measure: e.target.value })
                             }
                             placeholder="un"
-                            className="h-8 text-xs w-12 text-center"
+                            className="h-8 text-xs w-11 text-center"
                           />
                         </div>
+                      </div>
+
+                      {/* Custo Unitário do Insumo (R$) */}
+                      <div>
+                        <Label className="text-[10px] font-semibold text-slate-600 uppercase flex items-center justify-between">
+                          <span>Custo Unit. (R$)</span>
+                        </Label>
+                        <Input
+                          type="number"
+                          step="any"
+                          min="0"
+                          value={item.unit_cost}
+                          onChange={(e) =>
+                            handleUpdateDraftItem(idx, { unit_cost: e.target.value })
+                          }
+                          placeholder="0.00"
+                          className="h-8 text-xs font-mono mt-1"
+                        />
+                        <span className="text-[9px] text-slate-400 font-mono block mt-0.5 text-right">
+                          Total:{' '}
+                          {formatCurrency(
+                            (parseFloat(item.quantity_used.replace(',', '.')) || 0) *
+                              (parseFloat(item.unit_cost.replace(',', '.')) || 0),
+                          )}
+                        </span>
                       </div>
                     </div>
 
