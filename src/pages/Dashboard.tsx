@@ -721,13 +721,14 @@ export const Dashboard: React.FC = () => {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={salesAndRevenueLast6Months}
-                margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
+                margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
                 <XAxis dataKey="month" stroke="#94A3B8" fontSize={10} tickLine={false} />
                 <YAxis
                   stroke="#94A3B8"
                   fontSize={10}
+                  width={45}
                   tickLine={false}
                   tickFormatter={(val) => `R$${val >= 1000 ? (val / 1000).toFixed(0) + 'k' : val}`}
                 />
@@ -766,13 +767,14 @@ export const Dashboard: React.FC = () => {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
                 data={salesAndRevenueLast6Months}
-                margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
+                margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
                 <XAxis dataKey="month" stroke="#94A3B8" fontSize={10} tickLine={false} />
                 <YAxis
                   stroke="#94A3B8"
                   fontSize={10}
+                  width={45}
                   tickLine={false}
                   tickFormatter={(val) => `R$${val >= 1000 ? (val / 1000).toFixed(0) + 'k' : val}`}
                 />

@@ -166,7 +166,7 @@ export const BatchDetailModal: React.FC<BatchDetailModalProps> = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="w-[96vw] sm:max-w-3xl max-h-[92vh] flex flex-col p-0 overflow-hidden bg-white">
+        <DialogContent className="w-[96vw] sm:max-w-3xl max-h-[92vh] flex flex-col p-0 overflow-hidden bg-white rounded-2xl">
           {/* Header */}
           <DialogHeader className="bg-slate-900 text-white p-5 border-b border-slate-800 shrink-0">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pr-8">
@@ -538,7 +538,8 @@ export const BatchDetailModal: React.FC<BatchDetailModalProps> = ({
                                         href={fileUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="block aspect-video w-full bg-slate-100 overflow-hidden"
+                                        className="block aspect-square w-full bg-slate-100 overflow-hidden"
+                                        title="Clique para ampliar"
                                       >
                                         <img
                                           src={fileUrl}
@@ -547,8 +548,11 @@ export const BatchDetailModal: React.FC<BatchDetailModalProps> = ({
                                         />
                                       </a>
                                     ) : (
-                                      <div className="aspect-video w-full bg-slate-100 flex items-center justify-center">
-                                        <File className="w-6 h-6 text-slate-400" />
+                                      <div className="aspect-square w-full bg-slate-100 flex flex-col items-center justify-center p-2 text-slate-400">
+                                        <File className="w-6 h-6 text-slate-400 mb-1" />
+                                        <span className="text-[9px] uppercase font-mono">
+                                          {fileName.split('.').pop()}
+                                        </span>
                                       </div>
                                     )}
 

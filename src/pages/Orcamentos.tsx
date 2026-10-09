@@ -563,7 +563,7 @@ export function Orcamentos() {
 
       {/* Modal de Criação / Edição de Orçamento */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-slate-900 text-lg flex items-center gap-2">
               <FileText className="w-5 h-5 text-emerald-600" />

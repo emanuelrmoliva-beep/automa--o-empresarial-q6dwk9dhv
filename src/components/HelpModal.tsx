@@ -237,7 +237,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({
           {activeTab === 'tutorial' ? (
             <>
               {/* Coluna Esquerda: Categorias & Lista de Tópicos */}
-              <div className="w-full md:w-[320px] lg:w-[340px] shrink-0 border-r border-slate-200 bg-white flex flex-col overflow-hidden">
+              <div className="w-full md:w-[320px] lg:w-[340px] shrink-0 border-b md:border-b-0 md:border-r border-slate-200 bg-white flex flex-col max-h-[35vh] md:max-h-none overflow-hidden">
                 {/* Filtro de Categorias (Chips) */}
                 <div className="p-2.5 border-b border-slate-100 flex gap-1.5 overflow-x-auto scrollbar-thin shrink-0 bg-slate-50/70">
                   {HELP_CATEGORIES.filter((c) => c.id !== 'faq').map((cat) => (

@@ -900,12 +900,13 @@ export const ClienteHistorico: React.FC = () => {
 
         <div className="h-56 sm:h-64 w-full min-w-0">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartMonthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <BarChart data={chartMonthlyData} margin={{ top: 10, right: 10, left: -5, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
               <XAxis dataKey="label" stroke="#94A3B8" fontSize={10} tickLine={false} />
               <YAxis
                 stroke="#94A3B8"
                 fontSize={10}
+                width={48}
                 tickLine={false}
                 tickFormatter={(val) => `R$${val >= 1000 ? (val / 1000).toFixed(0) + 'k' : val}`}
               />

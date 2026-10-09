@@ -483,7 +483,7 @@ export const Clientes: React.FC = () => {
 
       {/* Modal Criar / Editar */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="w-[95vw] sm:max-w-[500px] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+        <DialogContent className="w-[95vw] sm:max-w-[500px] max-h-[90vh] overflow-y-auto p-4 sm:p-6 rounded-2xl">
           <DialogHeader>
             <div className="flex items-center justify-between pr-4">
               <DialogTitle className="text-lg font-bold text-slate-900">

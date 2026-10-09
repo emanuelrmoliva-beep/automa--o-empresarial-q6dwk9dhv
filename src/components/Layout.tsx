@@ -478,18 +478,18 @@ export const Layout: React.FC = () => {
             Automação Empresarial © 2025 • Todos os direitos reservados
           </footer>
 
-          {/* Botão Flutuante de Ajuda "?" (Canto Inferior Direito) */}
-          <div className="fixed bottom-16 sm:bottom-6 right-4 sm:right-6 z-40">
+          {/* Botão Flutuante de Ajuda "?" (Canto Inferior Direito) - escondido em telas mobile pequenas pois já tem aba na bottom bar */}
+          <div className="hidden lg:block fixed bottom-6 right-6 z-40">
             <button
               data-tour="floating-help"
               onClick={() => handleOpenHelp()}
-              className="group relative flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-lg hover:shadow-emerald-500/30 hover:scale-105 active:scale-95 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-400/30"
+              className="group relative flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-lg hover:shadow-emerald-500/30 hover:scale-105 active:scale-95 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-400/30"
               title="Ajuda & Dúvidas sobre o sistema (?)"
               aria-label="Abrir Ajuda e Tutorial"
             >
-              <HelpCircle className="w-6 h-6 sm:w-7 sm:h-7 stroke-[2.2] group-hover:rotate-12 transition-transform" />
+              <HelpCircle className="w-7 h-7 stroke-[2.2] group-hover:rotate-12 transition-transform" />
               {/* Tooltip flutuante sutil em desktop */}
-              <span className="hidden sm:inline-block pointer-events-none absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-slate-900 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+              <span className="pointer-events-none absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-slate-900 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg shadow-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
                 Dúvidas? Ver Tutorial
               </span>
             </button>
@@ -514,12 +514,12 @@ export const Layout: React.FC = () => {
           {/* Mobile Bottom Navigation Bar for quick thumb navigation */}
           <nav
             data-tour="mobile-bottom-nav"
-            className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 flex items-center justify-around py-1.5 px-2 safe-area-pb shadow-lg"
+            className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 grid grid-cols-6 py-1 px-1 safe-area-pb shadow-lg"
           >
             <NavLink
               to="/dashboard"
               className={({ isActive }) =>
-                `flex flex-col items-center justify-center py-1 px-2.5 rounded-lg text-[10px] font-medium transition ${
+                `flex flex-col items-center justify-center py-1 px-1 rounded-lg text-[10px] font-medium transition ${
                   isActive ? 'text-emerald-600 font-bold' : 'text-slate-500 hover:text-slate-900'
                 }`
               }
@@ -527,9 +527,9 @@ export const Layout: React.FC = () => {
               {({ isActive }) => (
                 <>
                   <LayoutDashboard
-                    className={`w-5 h-5 mb-0.5 ${isActive ? 'text-emerald-600 stroke-[2.5]' : ''}`}
+                    className={`w-4 h-4 sm:w-5 sm:h-5 mb-0.5 ${isActive ? 'text-emerald-600 stroke-[2.5]' : ''}`}
                   />
-                  <span>Início</span>
+                  <span className="truncate">Início</span>
                 </>
               )}
             </NavLink>
@@ -537,7 +537,7 @@ export const Layout: React.FC = () => {
             <NavLink
               to="/vendas"
               className={({ isActive }) =>
-                `flex flex-col items-center justify-center py-1 px-2.5 rounded-lg text-[10px] font-medium transition ${
+                `flex flex-col items-center justify-center py-1 px-1 rounded-lg text-[10px] font-medium transition ${
                   isActive ? 'text-emerald-600 font-bold' : 'text-slate-500 hover:text-slate-900'
                 }`
               }
@@ -545,9 +545,9 @@ export const Layout: React.FC = () => {
               {({ isActive }) => (
                 <>
                   <ShoppingCart
-                    className={`w-5 h-5 mb-0.5 ${isActive ? 'text-emerald-600 stroke-[2.5]' : ''}`}
+                    className={`w-4 h-4 sm:w-5 sm:h-5 mb-0.5 ${isActive ? 'text-emerald-600 stroke-[2.5]' : ''}`}
                   />
-                  <span>Vendas</span>
+                  <span className="truncate">Vendas</span>
                 </>
               )}
             </NavLink>
@@ -555,7 +555,7 @@ export const Layout: React.FC = () => {
             <NavLink
               to="/orcamentos"
               className={({ isActive }) =>
-                `flex flex-col items-center justify-center py-1 px-2.5 rounded-lg text-[10px] font-medium transition ${
+                `flex flex-col items-center justify-center py-1 px-1 rounded-lg text-[10px] font-medium transition ${
                   isActive ? 'text-emerald-600 font-bold' : 'text-slate-500 hover:text-slate-900'
                 }`
               }
@@ -563,9 +563,9 @@ export const Layout: React.FC = () => {
               {({ isActive }) => (
                 <>
                   <FileText
-                    className={`w-5 h-5 mb-0.5 ${isActive ? 'text-emerald-600 stroke-[2.5]' : ''}`}
+                    className={`w-4 h-4 sm:w-5 sm:h-5 mb-0.5 ${isActive ? 'text-emerald-600 stroke-[2.5]' : ''}`}
                   />
-                  <span>Orçamentos</span>
+                  <span className="truncate">Orçam.</span>
                 </>
               )}
             </NavLink>
@@ -573,7 +573,7 @@ export const Layout: React.FC = () => {
             <NavLink
               to="/agenda"
               className={({ isActive }) =>
-                `flex flex-col items-center justify-center py-1 px-2.5 rounded-lg text-[10px] font-medium transition ${
+                `flex flex-col items-center justify-center py-1 px-1 rounded-lg text-[10px] font-medium transition ${
                   isActive ? 'text-emerald-600 font-bold' : 'text-slate-500 hover:text-slate-900'
                 }`
               }
@@ -581,47 +581,29 @@ export const Layout: React.FC = () => {
               {({ isActive }) => (
                 <>
                   <CalendarDays
-                    className={`w-5 h-5 mb-0.5 ${isActive ? 'text-emerald-600 stroke-[2.5]' : ''}`}
+                    className={`w-4 h-4 sm:w-5 sm:h-5 mb-0.5 ${isActive ? 'text-emerald-600 stroke-[2.5]' : ''}`}
                   />
-                  <span>Agenda</span>
-                </>
-              )}
-            </NavLink>
-
-            <NavLink
-              to="/receitas"
-              className={({ isActive }) =>
-                `flex flex-col items-center justify-center py-1 px-2.5 rounded-lg text-[10px] font-medium transition ${
-                  isActive ? 'text-emerald-600 font-bold' : 'text-slate-500 hover:text-slate-900'
-                }`
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <ReceiptText
-                    className={`w-5 h-5 mb-0.5 ${isActive ? 'text-emerald-600 stroke-[2.5]' : ''}`}
-                  />
-                  <span>Finanças</span>
+                  <span className="truncate">Agenda</span>
                 </>
               )}
             </NavLink>
 
             <button
               onClick={() => handleOpenHelp()}
-              className="flex flex-col items-center justify-center py-1 px-2.5 rounded-lg text-[10px] font-medium text-emerald-600 hover:text-emerald-700 transition"
+              className="flex flex-col items-center justify-center py-1 px-1 rounded-lg text-[10px] font-medium text-emerald-600 hover:text-emerald-700 transition"
               aria-label="Abrir Ajuda e Tutorial"
             >
-              <HelpCircle className="w-5 h-5 mb-0.5 stroke-[2.2]" />
-              <span className="font-semibold">Ajuda</span>
+              <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5 mb-0.5 stroke-[2.2]" />
+              <span className="font-semibold truncate">Ajuda</span>
             </button>
 
             <button
               onClick={() => setMobileOpen(true)}
-              className="flex flex-col items-center justify-center py-1 px-2.5 rounded-lg text-[10px] font-medium text-slate-500 hover:text-slate-900 transition"
+              className="flex flex-col items-center justify-center py-1 px-1 rounded-lg text-[10px] font-medium text-slate-500 hover:text-slate-900 transition"
               aria-label="Abrir menu de módulos"
             >
-              <Menu className="w-5 h-5 mb-0.5" />
-              <span>Menu</span>
+              <Menu className="w-4 h-4 sm:w-5 sm:h-5 mb-0.5" />
+              <span className="truncate">Menu</span>
             </button>
           </nav>
         </div>

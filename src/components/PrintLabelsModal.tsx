@@ -229,7 +229,7 @@ export const PrintLabelsModal: React.FC<PrintLabelsModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[96vw] sm:max-w-[760px] max-h-[92vh] flex flex-col p-0 overflow-hidden">
+      <DialogContent className="w-[96vw] sm:max-w-[760px] max-h-[92vh] flex flex-col p-0 overflow-hidden rounded-2xl">
         {/* Cabeçalho */}
         <div className="bg-slate-900 text-white p-4 sm:p-5 flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center gap-3">

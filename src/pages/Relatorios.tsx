@@ -838,13 +838,14 @@ export const Relatorios: React.FC = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart
                   data={projectionData.timeline}
-                  margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                  margin={{ top: 10, right: 10, left: 5, bottom: 0 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis dataKey="label" stroke="#94a3b8" fontSize={11} tickLine={false} />
                   <YAxis
                     stroke="#94a3b8"
                     fontSize={11}
+                    width={52}
                     tickFormatter={(val) => `R$ ${(val / 1000).toFixed(0)}k`}
                     tickLine={false}
                   />

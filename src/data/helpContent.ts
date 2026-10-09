@@ -1458,139 +1458,230 @@ export const HELP_TOPICS: HelpTopic[] = [
 ]
 
 export const FAQ_LIST: FAQItem[] = [
+  // Produção & Rastreabilidade de Lotes
   {
     id: 'faq-producao-1',
     category: 'Produção & Lotes',
     question: 'O produto fabricado entra no estoque automaticamente?',
     answer:
-      'Não. O cadastro do lote e a seleção do produto fabricado servem estritamente para registro de rastreabilidade e histórico de fabricação. Caso você deseje dar entrada nas mercadorias acabadas no estoque físico para venda, faça a entrada manual correspondente no módulo Estoque.',
+      'Não. O lote registra a fabricação e o consumo de insumos. Para colocar as unidades prontas para venda na prateleira, dê entrada manual no módulo Estoque ou use o atalho de ajuste rápido.',
     relatedTopicId: 'controle-producao-lotes',
   },
   {
     id: 'faq-producao-2',
     category: 'Produção & Lotes',
-    question: 'A baixa de insumos é revertida ao editar ou excluir um lote?',
+    question: 'A baixa de insumos é desfeita se eu cancelar ou editar o lote?',
     answer:
-      'Sim, perfeitamente. Se você excluir um lote finalizado, todos os insumos consumidos são estornados e devolvidos integralmente ao estoque. Caso você edite o lote (trocando insumos ou alterando quantidades), o sistema recalcula as diferenças e ajusta o saldo em estoque com precisão matemática.',
+      'Sim. Ao excluir um lote, todos os insumos voltam para o estoque na hora. Se você editar quantidades ou trocar itens, o sistema ajusta a diferença automaticamente.',
     relatedTopicId: 'controle-producao-lotes',
   },
   {
     id: 'faq-producao-3',
     category: 'Produção & Lotes',
-    question: 'Quem pode ver o link da Consulta Pública do lote?',
+    question: 'Quem consegue acessar o link público do lote?',
     answer:
-      'Qualquer pessoa que estiver de posse do link exclusivo ou escanear o QR Code impresso na embalagem (clientes, fiscais, parceiros ou consumidores). O link possui um token criptográfico aleatório e difícil de adivinhar, não existindo listagem aberta ou busca pública por outros lotes na internet.',
+      'Apenas quem tiver o link direto ou apontar a câmera do celular para o QR Code da embalagem. O link usa um código seguro e não fica exposto em pesquisas no Google.',
     relatedTopicId: 'controle-producao-lotes',
   },
   {
     id: 'faq-producao-4',
     category: 'Produção & Lotes',
-    question: 'O QR Code aparece na etiqueta sem a consulta pública ativada?',
+    question: 'O QR Code sai impresso na etiqueta se a consulta pública estiver desligada?',
     answer:
-      'Não. O gerador de etiquetas de código de barras verifica o status do lote selecionado. Se a Consulta Pública estiver marcada como "NÃO" (ou desativada), o QR Code é expressamente omitido da etiqueta impressa, garantindo que nenhum link inativo ou dado indesejado seja veiculado.',
+      'Não. Quando a consulta pública está marcada como "Não", o QR Code não é impresso na etiqueta, garantindo total privacidade para a sua empresa.',
     relatedTopicId: 'controle-producao-lotes',
   },
   {
     id: 'faq-producao-5',
     category: 'Produção & Lotes',
-    question: 'O custo do lote é recalculado ao editar insumos ou quantidades?',
+    question: 'O custo total do lote atualiza sozinho ao mexer nos insumos?',
     answer:
-      'Sim. O custo total do lote é obtido pela soma da quantidade de cada insumo multiplicada pelo seu respectivo custo unitário. Se você alterar a quantidade utilizada, substituir um insumo ou ajustar o valor unitário no formulário de edição, o custo total e o custo por unidade fabricada são recalculados instantaneamente.',
+      'Sim. O sistema multiplica a quantidade de cada insumo pelo valor unitário e soma tudo. Ao alterar qualquer número no lote, o custo total e o custo por unidade atualizam na mesma hora.',
     relatedTopicId: 'controle-producao-lotes',
   },
   {
     id: 'faq-producao-6',
     category: 'Produção & Lotes',
-    question: 'Lotes antigos continuam consultáveis pelos clientes?',
+    question: 'Clientes conseguem consultar lotes antigos fabricados há meses?',
     answer:
-      'Sim. Desde que a Consulta Pública permaneça ativada (status SIM) e o token público não seja alterado ou excluído, qualquer lote antigo já fabricado continua acessível para consulta pelos clientes a qualquer momento.',
+      'Sim. Enquanto a opção de consulta pública estiver como "Sim", qualquer pessoa com o link ou QR Code pode ver a ficha técnica a qualquer momento.',
     relatedTopicId: 'controle-producao-lotes',
   },
   {
     id: 'faq-producao-7',
     category: 'Produção & Lotes',
-    question: 'O que acontece ao desativar a consulta pública de um lote?',
+    question: 'O que acontece quando desligo a consulta pública de um lote?',
     answer:
-      'Ao alterar a consulta para "NÃO", o token público é invalidado e removido. Se alguém tentar acessar o link antigo ou escanear um QR Code prévio, a página pública informará que a consulta para aquele lote não está disponível ou foi desativada pela empresa.',
+      'O link é cancelado imediatamente. Se alguém tentar abrir a página ou ler o QR Code antigo, verá um aviso de que as informações daquele lote não estão disponíveis.',
     relatedTopicId: 'controle-producao-lotes',
   },
   {
     id: 'faq-producao-8',
     category: 'Produção & Lotes',
-    question: 'Quais dados ficam visíveis publicamente na consulta do lote?',
+    question: 'Valores financeiros e meus custos aparecem na página pública do lote?',
     answer:
-      'Ficam visíveis exclusivamente informações técnicas de qualidade e rastreabilidade: número do lote, data de fabricação, nome do produto acabado, insumos utilizados (nome, lote do fornecedor, gramatura/medida) e fotos ou laudos técnicos anexados. DADOS FINANCEIROS (custo do lote, custo unitário, preços de insumos e lucros) NUNCA são expostos na página pública.',
+      'Não, nunca. A página pública mostra só informações de qualidade: lote, data, insumos usados, medidas e laudos. Custos, margens de lucro e preços nunca são exibidos para o cliente.',
     relatedTopicId: 'controle-producao-lotes',
   },
   {
     id: 'faq-producao-9',
     category: 'Produção & Lotes',
-    question: 'Posso usar insumos que não estão cadastrados no meu estoque?',
+    question: 'Posso usar insumos comprados de última hora que não estão no estoque?',
     answer:
-      'Sim. Na seleção do insumo dentro do lote, escolha a opção "Insumo Avulso / Externo". Você poderá digitar livremente o nome do insumo, medidas, lote do fabricante, fotos e custo unitário sem gerar movimentação nem baixa no estoque cadastrado.',
+      'Sim. Escolha a opção "Insumo Avulso / Externo" no formulário do lote. Você digita o nome, medida e custo livremente sem precisar cadastrar no estoque.',
     relatedTopicId: 'controle-producao-lotes',
   },
+
+  // Vendas, Lotes e Pedidos
   {
-    id: 'faq-1',
-    category: 'Conta & Acesso',
-    question: 'Como faço para redefinir minha senha se esqueci?',
+    id: 'faq-vendas-lote',
+    category: 'Vendas & Pedidos',
+    question: 'Como vincular um lote de produção a uma venda?',
     answer:
-      'Na tela de login, clique no link "Esqueceu a senha?". Digite o e-mail cadastrado e você receberá uma mensagem para redefinição com link seguro para criar sua nova credencial.',
+      'Na tela de Vendas, ao adicionar um produto no carrinho, se ele tiver lotes fabricados disponíveis você pode selecionar o lote desejado. O número do lote sai impresso no cupom e fica registrado no histórico do cliente.',
+    relatedTopicId: 'vendas',
   },
   {
-    id: 'faq-2',
-    category: 'Conta & Acesso',
-    question: 'Como alterar a Razão Social, CNPJ ou endereço da minha empresa?',
+    id: 'faq-pedidos-aberto',
+    category: 'Vendas & Pedidos',
+    question: 'O que são Pedidos em Aberto e como eles são calculados?',
     answer:
-      'Clique no menu superior direito (onde aparece seu nome e empresa) e selecione "Dados da Empresa", ou acerte pelo link no cartão do Dashboard. Você poderá atualizar nome fantasia, CNPJ, telefone e CEP.',
-    relatedTopicId: 'primeiro-acesso',
+      'São propostas enviadas que aguardam resposta do cliente somadas a entregas agendadas ainda não concluídas. Esse número mostra quanto dinheiro você tem engatilhado para entrar.',
+    relatedTopicId: 'pedidos-em-aberto',
   },
+  {
+    id: 'faq-orcamento-compartilhar',
+    category: 'Vendas & Pedidos',
+    question: 'Como enviar um orçamento pelo WhatsApp ou baixar em PDF?',
+    answer:
+      'No módulo Orçamentos, clique no botão "Compartilhar" do orçamento. Você pode abrir direto no WhatsApp do cliente com o texto pronto, copiar a mensagem ou baixar um PDF profissional com a logo da sua empresa.',
+    relatedTopicId: 'orcamentos',
+  },
+  {
+    id: 'faq-cotacoes',
+    category: 'Operação',
+    question: 'Para que serve o módulo de Cotações com Fornecedores?',
+    answer:
+      'Serve para você comparar preços de compras antes de fechar pedidos. Registre orçamentos de diferentes fornecedores para o mesmo produto e identifique facilmente o melhor custo-benefício.',
+    relatedTopicId: 'cotacoes',
+  },
+
+  // Clientes, Histórico 360° e Fidelidade
+  {
+    id: 'faq-cliente-360',
+    category: 'Clientes & Fidelidade',
+    question: 'O que encontro no Histórico 360° do Cliente?',
+    answer:
+      'Tudo sobre o cliente em um só lugar: linha do tempo com todas as compras, orçamentos enviados, pagamentos pendentes, gráfico de compras mês a mês, ticket médio e lote dos produtos que ele comprou.',
+    relatedTopicId: 'clientes',
+  },
+  {
+    id: 'faq-fidelidade-niveis',
+    category: 'Clientes & Fidelidade',
+    question: 'Como funciona o Programa de Fidelidade e as medalhas?',
+    answer:
+      'O sistema analisa as compras dos clientes e os classifica automaticamente em faixas (como Bronze, Prata, Ouro e Diamante). Você define a regra (por valor total comprado, ticket médio ou quantidade de pedidos) e o selo aparece no card do cliente.',
+    relatedTopicId: 'fidelidade',
+  },
+
+  // Estoque & Etiquetas
+  {
+    id: 'faq-etiquetas-impressao',
+    category: 'Estoque',
+    question: 'Como imprimir etiquetas com código de barras e QR Code?',
+    answer:
+      'No módulo Estoque, clique no botão "Etiquetas". Você escolhe quais produtos quer imprimir, quantas cópias de cada e se quer incluir lote e QR Code. O sistema gera uma folha A4 pronta (padrão 40 etiquetas) para imprimir em qualquer impressora.',
+    relatedTopicId: 'etiquetas-codigos-barras',
+  },
+  {
+    id: 'faq-estoque-ajuste',
+    category: 'Estoque',
+    question: 'Como fazer um acerto rápido de estoque sem editar o produto todo?',
+    answer:
+      'No card do produto ou na tabela de estoque, clique no número da quantidade (ou no botão "Ajustar Estoque"). Você soma ou subtrai itens e informa o motivo (ex: contagem de inventário ou avaria).',
+    relatedTopicId: 'estoque',
+  },
+  {
+    id: 'faq-5',
+    category: 'Estoque',
+    question: 'O que acontece quando o estoque de um produto atinge o nível mínimo?',
+    answer:
+      'O produto ganha um aviso amarelo de "Estoque Baixo" para alertar você a fazer novas compras. Se a quantidade chegar a zero, fica com aviso vermelho de "Esgotado".',
+    relatedTopicId: 'estoque',
+  },
+
+  // Financeiro & Relatórios
   {
     id: 'faq-3',
     category: 'Financeiro',
     question: 'Qual é a diferença entre Receitas/Despesas e Contas a Pagar/Receber?',
     answer:
-      'Receitas e Despesas representam dinheiro que já aconteceu (competência/caixa realizado). Contas a Pagar e a Receber são títulos e boletos para o futuro. Quando você clica em "Quitar" em uma conta a pagar/receber, o sistema automaticamente gera o lançamento de saída/entrada no livro caixa.',
+      'Receitas e despesas são pagamentos que já aconteceram hoje. Contas a pagar e receber são contas para os próximos dias ou meses. Ao marcar uma conta como "Quitar", ela vai automaticamente para o livro caixa.',
     relatedTopicId: 'contas-pagar-receber',
+  },
+  {
+    id: 'faq-relatorios-projecao',
+    category: 'Financeiro',
+    question: 'Como funciona o Fluxo de Caixa Projetado de 30, 60 e 90 dias?',
+    answer:
+      'O relatório pega o dinheiro que você tem em caixa hoje, soma tudo o que você tem a receber no período e diminui as contas a pagar dia a dia. Se o saldo for ficar negativo em algum dia futuro, o sistema avisa com antecedência.',
+    relatedTopicId: 'relatorios',
   },
   {
     id: 'faq-4',
     category: 'Financeiro',
-    question: 'Como funciona a fórmula de Markup Divisor na Formação de Preços?',
+    question: 'Como calcular o preço de venda certo com o Markup Divisor?',
     answer:
-      'O Markup Divisor divide o custo pelo fator residual: Preço = Custo / (1 - (Impostos% + Custos Variáveis% + Margem Desejada%)). Isso garante que a margem calculada corresponda exatamente à fatia líquida sobre o preço de venda final.',
+      'Na tela de Formação de Preços, você digita o custo do produto, a porcentagem de impostos, custos variáveis e quanto quer lucrar. A fórmula garante que sua margem de lucro seja real sobre o valor final de venda.',
     relatedTopicId: 'formacao-de-precos',
-  },
-  {
-    id: 'faq-5',
-    category: 'Operação',
-    question: 'O que acontece quando o estoque de um produto atinge o nível mínimo?',
-    answer:
-      'O produto ganha uma etiqueta amarela de alerta ("Estoque Baixo") na listagem e passa a ser destacado nos filtros de reposição. Quando a quantidade chega a 0, ele passa para etiqueta vermelha ("Esgotado").',
-    relatedTopicId: 'estoque',
   },
   {
     id: 'faq-6',
     category: 'Gestão',
-    question: 'Como as Metas & Réguas calculam o progresso sozinhas?',
+    question: 'Como as Metas & Réguas calculam meu progresso sozinhas?',
     answer:
-      'Metas do tipo "Faturamento" somam todas as receitas recebidas no período estipulado. Metas de "Lucro" subtraem as despesas pagas das receitas. Metas de "Vendas" somam o volume de vendas concluídas. Metas de "Equipamento / Economia" permitem atualização de valor atual sob demanda.',
+      'Metas de Faturamento somam suas receitas do período. Metas de Lucro subtraem os gastos das receitas. Metas de Vendas contam os pedidos fechados. As barras de progresso no Dashboard atualizam a cada venda nova.',
     relatedTopicId: 'metas-reguas',
   },
   {
-    id: 'faq-7',
-    category: 'Mobile',
-    question: 'O aplicativo funciona offline se a internet cair?',
+    id: 'faq-8',
+    category: 'Financeiro',
+    question: 'Como exportar relatórios para enviar ao meu contador?',
     answer:
-      'O app carrega em cache pelo Service Worker do PWA para visualização imediata da interface, mas sincronizações com o banco de dados necessitam de conexão ativa para salvar com segurança no servidor na nuvem.',
+      'Na página de Vendas, de Extratos ou na Central de Relatórios, clique no botão "Exportar CSV" ou "Exportar PDF". Os arquivos abrem perfeitamente no Excel e em qualquer leitor de PDF.',
+    relatedTopicId: 'relatorios',
+  },
+
+  // Celular & Conta
+  {
+    id: 'faq-7',
+    category: 'Mobile & PWA',
+    question: 'O aplicativo funciona offline se a internet cair temporariamente?',
+    answer:
+      'A tela do app abre mesmo sem sinal pelo recurso de aplicativo instalado (PWA). Porém, para salvar novos lançamentos e sincronizar dados com a nuvem, é necessário ter conexão com a internet.',
     relatedTopicId: 'pwa-celular',
   },
   {
-    id: 'faq-8',
-    category: 'Operação',
-    question: 'Como exportar relatórios para enviar ao meu contador?',
+    id: 'faq-pwa-instalar',
+    category: 'Mobile & PWA',
+    question: 'Como colocar o ícone do sistema na tela do meu celular?',
     answer:
-      'Tanto na página de Vendas quanto na Central de Relatórios e Extratos, utilize o botão "Exportar CSV". O arquivo gerado é compatível com Excel, Google Planilhas e sistemas contábeis.',
-    relatedTopicId: 'relatorios',
+      'No Android (Chrome), toque nos três pontinhos e escolha "Instalar aplicativo". No iPhone (Safari), toque no botão de compartilhar (quadrado com seta) e escolha "Adicionar à Tela de Início". Ele funciona em tela cheia como um app de loja.',
+    relatedTopicId: 'pwa-celular',
+  },
+  {
+    id: 'faq-1',
+    category: 'Conta & Acesso',
+    question: 'Como redefinir minha senha se esqueci?',
+    answer:
+      'Na tela de entrada, clique em "Esqueceu a senha?". Digite seu e-mail cadastrado e você receberá um link seguro para criar uma nova senha.',
+  },
+  {
+    id: 'faq-2',
+    category: 'Conta & Acesso',
+    question: 'Como alterar o nome da minha empresa, CNPJ ou telefone?',
+    answer:
+      'Clique no menu superior direito (onde está seu nome) e escolha "Dados da Empresa", ou vá em Configurações. Lá você atualiza nome fantasia, CNPJ, telefone, logotipo e endereço.',
+    relatedTopicId: 'primeiro-acesso',
   },
 ]

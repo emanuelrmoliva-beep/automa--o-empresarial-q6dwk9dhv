@@ -829,7 +829,7 @@ export const Vendas: React.FC = () => {
 
       {/* Modal Nova / Editar Venda com baixa de estoque */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="w-[95vw] sm:max-w-[560px] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+        <DialogContent className="w-[95vw] sm:max-w-[560px] max-h-[90vh] overflow-y-auto p-4 sm:p-6 rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
               <ShoppingCart className="w-5 h-5 text-emerald-600" />
